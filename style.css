@@ -1,0 +1,1552 @@
+/* ═══════════════════════════════════════════════════════════
+   NEON SNAKE – Fully Adaptive Responsive Architecture
+   Intelligently scales and optimizes for:
+   • Large Monitors (4K, 1440p, 1080p Desktop)
+   • Laptops & Short Desktops (1366×768, 1280×720)
+   • Tablets (iPad, Android Tablets - Portrait & Landscape)
+   • Mobile Phones (All aspect ratios, Safe Areas, Notches, Island)
+   • Mobile Landscape (Side-by-side fluid layout)
+   • Hybrid Devices (Touchscreens with Keyboards/Trackpads)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Design Tokens ── */
+:root {
+    --bg:          #080a12;
+    --surface:     rgba(10, 14, 28, 0.88);
+    --border-dim:  rgba(0, 255, 255, 0.12);
+    --border-glow: rgba(0, 255, 255, 0.35);
+    --cyan:        #00f0ff;
+    --cyan-dim:    rgba(0, 240, 255, 0.14);
+    --cyan-glow:   rgba(0, 240, 255, 0.55);
+    --green:       #00ff88;
+    --green-dim:   rgba(0, 255, 136, 0.14);
+    --green-glow:  rgba(0, 255, 136, 0.45);
+    --red:         #ff2d55;
+    --red-dim:     rgba(255, 45, 85, 0.14);
+    --red-glow:    rgba(255, 45, 85, 0.55);
+    --gold:        #ffd700;
+    --text:        #e8eaf6;
+    --text-muted:  #6c7a99;
+    --font:        'Outfit', sans-serif;
+    --font-ar:     'Cairo', 'Outfit', sans-serif;
+    --radius-sm:   8px;
+    --radius-md:   16px;
+    --radius-lg:   22px;
+    --tf:          0.15s ease;
+    --ts:          0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* ── Proportional Default Layout Parameters (Desktop) ── */
+    --chrome-v:    240px;
+    --side-pad:    clamp(16px, 3vw, 40px);
+    
+    /* Dynamic Board Size: uses available height & width safely */
+    --board-size: clamp(
+        260px,
+        min(calc(100dvh - var(--chrome-v)), calc(100vw - (var(--side-pad) * 2) - 32px), 780px),
+        780px
+    );
+}
+
+/* ── Global Reset & System Safety ── */
+*, *::before, *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html {
+    height: 100%;
+    /* Handle Notch & Safe Area Insets seamlessly */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
+body {
+    font-family: var(--font);
+    color: var(--text);
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: clamp(6px, 1.5vmin, 20px);
+    background: var(--bg);
+    background-image:
+        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(0, 60, 120, 0.35) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 90%, rgba(0, 100, 80, 0.25) 0%, transparent 55%),
+        radial-gradient(ellipse 40% 40% at 50% 50%, rgba(0, 30, 60, 0.4) 0%, transparent 70%);
+    overscroll-behavior-y: contain;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+/* ── Ambient Floating Particles ── */
+.bg-particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 50%;
+    opacity: 0;
+    animation: float-up 12s infinite ease-in-out;
+}
+
+.particle:nth-child(1) { left: 10%; background: var(--cyan);  animation-delay: 0s; animation-duration: 14s; }
+.particle:nth-child(2) { left: 25%; background: var(--green); animation-delay: 2s; animation-duration: 11s; }
+.particle:nth-child(3) { left: 40%; background: var(--cyan);  animation-delay: 4s; animation-duration: 16s; }
+.particle:nth-child(4) { left: 55%; background: var(--green); animation-delay: 1s; animation-duration: 13s; }
+.particle:nth-child(5) { left: 70%; background: var(--cyan);  animation-delay: 3s; animation-duration: 15s; }
+.particle:nth-child(6) { left: 82%; background: var(--green); animation-delay: 5s; animation-duration: 12s; }
+.particle:nth-child(7) { left: 15%; background: var(--cyan);  animation-delay: 7s; animation-duration: 18s; }
+.particle:nth-child(8) { left: 90%; background: var(--green); animation-delay: 6s; animation-duration: 10s; }
+
+@keyframes float-up {
+    0%   { transform: translateY(100vh) scale(1); opacity: 0; }
+    10%  { opacity: 0.6; }
+    90%  { opacity: 0.3; }
+    100% { transform: translateY(-10vh) scale(0.5); opacity: 0; }
+}
+
+/* ── Adaptive Game Container ── */
+.game-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(10px, 2vmin, 22px);
+    padding: clamp(12px, 2.5vmin, 30px) var(--side-pad) clamp(8px, 1.8vmin, 22px);
+    width: min(calc(var(--board-size) + var(--side-pad) * 2), calc(100vw - 16px));
+    max-width: 100%;
+    border-radius: var(--radius-lg);
+    background: var(--surface);
+    backdrop-filter: blur(22px);
+    -webkit-backdrop-filter: blur(22px);
+    border: 1px solid var(--border-dim);
+    box-shadow:
+        0 0 0 1px var(--border-dim),
+        0 0 50px rgba(0, 200, 255, 0.08),
+        0 24px 70px rgba(0, 0, 0, 0.55);
+    animation: container-in 0.5s var(--ts) both;
+}
+
+@keyframes container-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── Header ── */
+.header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: clamp(10px, 2vw, 20px);
+}
+
+.title-block {
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.game-title {
+    font-size: clamp(1.35rem, 2.4vw + 0.4rem, 2.5rem);
+    font-weight: 900;
+    letter-spacing: clamp(1.5px, 0.3vw, 3px);
+    color: var(--text);
+    text-shadow: 0 0 8px var(--cyan), 0 0 22px var(--cyan-glow);
+}
+
+.game-subtitle {
+    font-size: clamp(0.52rem, 0.7vw + 0.1rem, 0.76rem);
+    font-weight: 400;
+    letter-spacing: clamp(2.5px, 0.4vw, 4.5px);
+    color: var(--text-muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+}
+
+/* ── HUD Right (Scores + Controls) ── */
+.hud-right {
+    display: flex;
+    align-items: center;
+    gap: clamp(8px, 1.5vw, 16px);
+}
+
+/* ── Score Cards ── */
+.score-board {
+    display: flex;
+    gap: clamp(6px, 1.2vw, 12px);
+}
+
+.score-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--cyan-dim);
+    padding: clamp(6px, 1.2vmin, 14px) clamp(12px, 2vw, 26px);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-dim);
+    min-width: clamp(64px, 8vw, 100px);
+    transition: border-color var(--ts);
+}
+
+.score-box:hover {
+    border-color: var(--border-glow);
+}
+
+.label {
+    font-size: clamp(0.56rem, 0.8vw + 0.1rem, 0.74rem);
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.value {
+    font-size: clamp(1.2rem, 2vw + 0.2rem, 2.1rem);
+    font-weight: 900;
+    color: var(--cyan);
+    text-shadow: 0 0 6px var(--cyan-glow);
+    transition: transform 0.2s, color 0.2s;
+    line-height: 1.1;
+}
+
+.score-box-best .value {
+    color: var(--gold);
+    text-shadow: 0 0 6px rgba(255, 215, 0, 0.5);
+}
+
+.score-pop {
+    animation: score-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes score-pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.45); }
+    100% { transform: scale(1); }
+}
+
+/* ── Controls Block (Pause & Mute on Top, Volume Row Below Centered) ── */
+.controls-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(3px, 0.6vmin, 5px);
+}
+
+.controls-top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: clamp(6px, 1vw, 10px);
+}
+
+.icon-btn {
+    width: clamp(38px, 4.4vw, 48px);
+    height: clamp(38px, 4.4vw, 48px);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-dim);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--tf);
+    position: relative;
+    touch-action: manipulation;
+}
+
+.icon-btn svg {
+    width: clamp(18px, 2.2vw, 24px);
+    height: clamp(18px, 2.2vw, 24px);
+}
+
+/* Extended invisible touch-target */
+.icon-btn::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+}
+
+.icon-btn:hover {
+    background: var(--cyan-dim);
+    border-color: var(--border-glow);
+    color: var(--cyan);
+    box-shadow: 0 0 14px var(--cyan-glow);
+}
+
+.icon-btn:active {
+    transform: scale(0.9);
+}
+
+.icon-btn.active {
+    color: var(--cyan);
+    border-color: var(--border-glow);
+}
+
+.hidden-icon {
+    display: none;
+}
+
+/* ── Inline Volume Controls (Centered Row Underneath Pause & Mute) ── */
+.volume-inline-control {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: clamp(4px, 0.8vw, 8px);
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+}
+
+.vol-mini-btn {
+    width: clamp(28px, 3.4vw, 36px);
+    height: clamp(28px, 3.4vw, 36px);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-dim);
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: clamp(1.05rem, 1.3vw, 1.3rem);
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: all var(--tf);
+    position: relative;
+    touch-action: manipulation;
+    padding: 0;
+}
+
+/* Extended touch tap target */
+.vol-mini-btn::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+}
+
+.vol-mini-btn:hover {
+    background: var(--cyan-dim);
+    border-color: var(--border-glow);
+    color: var(--cyan);
+    box-shadow: 0 0 14px var(--cyan-glow);
+}
+
+.vol-mini-btn:active {
+    transform: scale(0.9);
+}
+
+.vol-mini-display {
+    color: var(--cyan);
+    font-weight: 800;
+    font-size: clamp(0.72rem, 0.9vw, 0.86rem);
+    min-width: clamp(22px, 2.6vw, 30px);
+    text-align: center;
+    font-family: var(--font);
+    text-shadow: 0 0 6px var(--cyan-glow);
+    line-height: 1;
+}
+
+@media (hover: none) and (pointer: coarse), (pointer: coarse) {
+    .vol-mini-btn {
+        width: clamp(28px, 6.5vmin, 34px);
+        height: clamp(28px, 6.5vmin, 34px);
+        font-size: clamp(1.1rem, 2.8vmin, 1.3rem);
+    }
+    .vol-mini-display {
+        font-size: clamp(0.74rem, 1.8vmin, 0.86rem);
+        min-width: clamp(22px, 5vmin, 28px);
+    }
+}
+
+/* ── Canvas Wrapper (Main Square Board Area) ── */
+.canvas-wrapper {
+    position: relative;
+    width: var(--board-size);
+    height: var(--board-size);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1.5px solid rgba(0, 240, 255, 0.25);
+    box-shadow:
+        0 0 0 1px rgba(0, 240, 255, 0.08),
+        0 0 35px rgba(0, 255, 136, 0.13),
+        inset 0 0 24px rgba(0, 0, 0, 0.32);
+    flex-shrink: 0;
+    touch-action: none; /* Prevents scroll hijacking on canvas touch */
+}
+
+#gameCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: #080c18;
+    background-image:
+        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+    background-size: var(--grid-css, 30px) var(--grid-css, 30px);
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+}
+
+/* Flash Animations */
+.canvas-wrapper.flash-eat { animation: flash-eat 0.25s ease; }
+.canvas-wrapper.flash-die { animation: flash-die 0.45s ease; }
+
+@keyframes flash-eat {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.08), 0 0 35px rgba(0, 255, 136, 0.13), inset 0 0 24px rgba(0, 0, 0, 0.32); }
+    50%      { box-shadow: 0 0 0 3px var(--green), 0 0 45px var(--green-glow); }
+}
+
+@keyframes flash-die {
+    0%, 100% { box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.08), 0 0 35px rgba(0, 255, 136, 0.13), inset 0 0 24px rgba(0, 0, 0, 0.32); }
+    30%      { box-shadow: 0 0 0 4px var(--red), 0 0 65px var(--red-glow); }
+}
+
+/* ── Overlays (Start, Pause, Game Over) ── */
+.overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 6, 14, 0.84);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity var(--ts);
+    z-index: 10;
+    padding: 10px;
+}
+
+.overlay.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.overlay-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(8px, 2.2vmin, 20px);
+    padding: clamp(14px, 3.5vmin, 34px) clamp(16px, 4vmin, 38px);
+    border-radius: var(--radius-lg);
+    background: rgba(8, 12, 28, 0.94);
+    border: 1px solid var(--border-glow);
+    box-shadow:
+        0 0 0 1px var(--border-dim),
+        0 0 60px rgba(0, 200, 255, 0.12);
+    max-width: 100%;
+    width: 100%;
+    text-align: center;
+}
+
+.slide-in {
+    animation: slide-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+@keyframes slide-in {
+    from { opacity: 0; transform: scale(0.9) translateY(14px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.overlay-title {
+    font-size: clamp(1.35rem, 4.8vmin, 2.7rem);
+    font-weight: 900;
+    letter-spacing: 3px;
+    text-align: center;
+}
+
+.glow-cyan {
+    color: var(--cyan);
+    text-shadow: 0 0 12px var(--cyan), 0 0 30px var(--cyan-glow);
+}
+
+.glow-red {
+    color: var(--red);
+    text-shadow: 0 0 12px var(--red), 0 0 30px var(--red-glow);
+}
+
+.overlay-subtitle {
+    font-size: clamp(0.5rem, 1.2vmin, 0.7rem);
+    letter-spacing: 4px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-top: -4px;
+}
+
+/* ── Key Hints ── */
+.key-hints {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(4px, 1vmin, 7px);
+    width: 100%;
+}
+
+.key-hint-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: clamp(0.7rem, 1.5vmin, 0.88rem);
+    color: var(--text-muted);
+}
+
+.key-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3px 9px;
+    border-radius: 5px;
+    background: rgba(0, 240, 255, 0.08);
+    border: 1px solid var(--border-glow);
+    color: var(--cyan);
+    font-size: clamp(0.66rem, 1.4vmin, 0.82rem);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+}
+
+.desktop-hints { display: flex; }
+.mobile-hints  { display: none; }
+
+/* ── High Score Badge & Game Over Scores ── */
+.badge-new-hs {
+    font-size: clamp(0.74rem, 1.7vmin, 0.94rem);
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    padding: 4px 14px;
+    border-radius: 20px;
+    border: 1px solid var(--gold);
+    background: rgba(255, 215, 0, 0.08);
+    animation: pulse-gold 1.2s ease infinite;
+    margin-top: -4px;
+}
+
+.badge-new-hs.hidden {
+    display: none;
+}
+
+@keyframes pulse-gold {
+    0%, 100% { box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); }
+    50%      { box-shadow: 0 0 22px rgba(255, 215, 0, 0.7); }
+}
+
+.final-scores {
+    display: flex;
+    gap: clamp(8px, 2.5vmin, 24px);
+}
+
+.final-score-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: clamp(6px, 1.8vmin, 14px) clamp(14px, 3vmin, 28px);
+    border-radius: var(--radius-sm);
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-dim);
+    min-width: clamp(64px, 11vmin, 96px);
+}
+
+.fs-label {
+    font-size: clamp(0.54rem, 1vmin, 0.7rem);
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.fs-value {
+    font-size: clamp(1.35rem, 3.8vmin, 2.2rem);
+    font-weight: 900;
+    color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan-glow);
+}
+
+.fs-best {
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
+}
+
+/* ── Glow Button ── */
+.glow-btn {
+    padding: clamp(10px, 1.8vmin, 15px) clamp(22px, 4.5vmin, 44px);
+    font-size: clamp(0.84rem, 1.7vmin, 1.02rem);
+    font-weight: 700;
+    font-family: var(--font);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    border: 1.5px solid var(--green);
+    border-radius: var(--radius-sm);
+    background: var(--green-dim);
+    color: var(--green);
+    cursor: pointer;
+    transition: all var(--tf);
+    box-shadow: 0 0 12px var(--green-glow);
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+    touch-action: manipulation;
+    min-height: 44px;
+}
+
+.glow-btn::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--green);
+    opacity: 0;
+    transition: opacity var(--tf);
+    z-index: -1;
+}
+
+.glow-btn:hover {
+    color: #000;
+    box-shadow: 0 0 28px var(--green-glow);
+    transform: translateY(-2px);
+}
+
+.glow-btn:hover::before {
+    opacity: 1;
+}
+
+.glow-btn:active {
+    transform: translateY(0) scale(0.97);
+}
+
+.secondary-btn {
+    border-color: var(--cyan);
+    background: var(--cyan-dim);
+    color: var(--cyan);
+    box-shadow: 0 0 12px var(--cyan-glow);
+}
+.secondary-btn::before {
+    background: var(--cyan);
+}
+.secondary-btn:hover {
+    color: #000;
+    box-shadow: 0 0 28px var(--cyan-glow);
+}
+
+.danger-btn {
+    padding: clamp(8px, 1.5vmin, 12px) clamp(14px, 3vmin, 22px);
+    font-size: clamp(0.74rem, 1.4vmin, 0.88rem);
+    font-weight: 700;
+    font-family: var(--font);
+    letter-spacing: 1px;
+    border: 1px solid var(--red);
+    border-radius: var(--radius-sm);
+    background: var(--red-dim);
+    color: var(--red);
+    cursor: pointer;
+    transition: all var(--tf);
+    box-shadow: 0 0 10px var(--red-glow);
+    touch-action: manipulation;
+    width: 100%;
+}
+.danger-btn:hover {
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 0 20px var(--red-glow);
+    transform: translateY(-1px);
+}
+.danger-btn:active {
+    transform: scale(0.97);
+}
+
+/* ── Menu Screen ── */
+.menu-card {
+    max-width: 360px;
+    gap: clamp(12px, 2.5vmin, 20px);
+}
+
+.menu-actions {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.8vmin, 14px);
+    width: 100%;
+}
+
+.menu-btn {
+    width: 100%;
+}
+
+.lang-toggle-group {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-dim);
+    border-radius: 20px;
+    padding: 4px 12px;
+    margin-top: 4px;
+}
+
+.lang-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-family: var(--font);
+    font-size: clamp(0.72rem, 1.4vmin, 0.84rem);
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: color var(--tf), text-shadow var(--tf);
+    padding: 2px 6px;
+    border-radius: 12px;
+}
+
+.lang-btn.active {
+    color: var(--cyan);
+    text-shadow: 0 0 8px var(--cyan-glow);
+}
+
+.lang-btn:hover:not(.active) {
+    color: var(--text);
+}
+
+.lang-divider {
+    color: var(--border-dim);
+    font-size: 0.8rem;
+}
+
+/* ── Mode Select Screen ── */
+.mode-select-card {
+    position: relative;
+    max-width: 380px;
+    gap: clamp(12px, 2.5vmin, 20px);
+    padding: clamp(14px, 3vmin, 26px) clamp(14px, 3.2vmin, 28px);
+}
+
+.mode-select-card .overlay-title {
+    padding: 0 clamp(24px, 5vmin, 36px);
+    width: 100%;
+}
+
+.modes-list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(10px, 2vmin, 16px);
+    width: 100%;
+}
+
+.mode-card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: clamp(12px, 2.4vmin, 18px) clamp(14px, 2.8vmin, 20px);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-dim);
+    text-align: left;
+    transition: all var(--tf);
+    user-select: none;
+    -webkit-user-select: none;
+    width: 100%;
+    font-family: var(--font);
+    box-sizing: border-box;
+}
+
+html[dir="rtl"] .mode-card {
+    text-align: right;
+}
+
+.active-mode {
+    cursor: pointer;
+    border-color: var(--green);
+    background: rgba(0, 255, 136, 0.06);
+    box-shadow: 0 0 14px rgba(0, 255, 136, 0.15);
+    touch-action: manipulation;
+}
+
+.active-mode:hover {
+    background: var(--green-dim);
+    border-color: var(--green);
+    box-shadow: 0 0 24px var(--green-glow);
+    transform: translateY(-2px);
+}
+
+.active-mode:active {
+    transform: scale(0.98);
+}
+
+.mode-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.mode-name {
+    font-size: clamp(0.92rem, 1.8vmin, 1.15rem);
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.glow-green {
+    color: var(--green);
+    text-shadow: 0 0 10px var(--green-glow);
+}
+
+.mode-badge {
+    font-size: clamp(0.6rem, 1.2vmin, 0.72rem);
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid var(--green);
+}
+
+.mode-desc {
+    font-size: clamp(0.7rem, 1.4vmin, 0.84rem);
+    color: var(--text-muted);
+    line-height: 1.35;
+    margin: 0;
+}
+
+.disabled-mode {
+    opacity: 0.55;
+    cursor: not-allowed;
+    border-style: dashed;
+    border-color: var(--border-dim);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.mode-locked {
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+/* ── Settings Screen ── */
+.settings-card {
+    position: relative;
+    max-width: 380px;
+    max-height: 92%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--cyan-dim) transparent;
+    gap: clamp(10px, 2vmin, 16px);
+    padding: clamp(14px, 3vmin, 26px) clamp(14px, 3.2vmin, 28px);
+}
+
+.settings-card .overlay-title {
+    padding: 0 clamp(24px, 5vmin, 36px);
+    width: 100%;
+}
+
+.modal-close-btn {
+    position: absolute;
+    top: clamp(10px, 2vmin, 16px);
+    right: clamp(10px, 2vmin, 16px);
+    width: clamp(28px, 3.5vmin, 34px);
+    height: clamp(28px, 3.5vmin, 34px);
+    border-radius: var(--radius-sm);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-dim);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--tf);
+    touch-action: manipulation;
+    padding: 0;
+    z-index: 10;
+}
+
+html[dir="rtl"] .modal-close-btn {
+    right: auto;
+    left: clamp(10px, 2vmin, 16px);
+}
+
+.modal-close-btn svg {
+    width: 55%;
+    height: 55%;
+    pointer-events: none;
+}
+
+/* Extended comfortable touch tap target */
+.modal-close-btn::after {
+    content: '';
+    position: absolute;
+    inset: -8px;
+}
+
+.modal-close-btn:hover {
+    background: var(--cyan-dim);
+    border-color: var(--border-glow);
+    color: var(--cyan);
+    box-shadow: 0 0 14px var(--cyan-glow);
+}
+
+.modal-close-btn:active {
+    transform: scale(0.9);
+}
+
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.5vmin, 12px);
+    width: 100%;
+}
+
+.setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--border-dim);
+    border-radius: var(--radius-sm);
+    padding: clamp(6px, 1.2vmin, 10px) clamp(10px, 2vmin, 16px);
+}
+
+.setting-label {
+    font-size: clamp(0.72rem, 1.5vmin, 0.86rem);
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--text);
+}
+
+.toggle-pill {
+    min-width: 58px;
+    padding: 5px 12px;
+    border-radius: 14px;
+    font-family: var(--font);
+    font-size: clamp(0.72rem, 1.4vmin, 0.84rem);
+    font-weight: 800;
+    letter-spacing: 1px;
+    cursor: pointer;
+    border: 1px solid var(--red);
+    background: var(--red-dim);
+    color: var(--red);
+    transition: all var(--tf);
+}
+
+.toggle-pill.active {
+    border-color: var(--green);
+    background: var(--green-dim);
+    color: var(--green);
+    box-shadow: 0 0 10px var(--green-glow);
+}
+
+.settings-vol-control {
+    background: none;
+    border: none;
+    height: auto;
+    padding: 0;
+}
+
+.setting-box {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+    padding: clamp(8px, 1.5vmin, 12px);
+    text-align: left;
+}
+
+html[dir="rtl"] .setting-box {
+    text-align: right;
+}
+
+.setting-box-title {
+    font-size: clamp(0.68rem, 1.3vmin, 0.78rem);
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: var(--cyan);
+}
+
+.setting-hints-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    font-size: clamp(0.64rem, 1.2vmin, 0.76rem);
+    color: var(--text-muted);
+}
+
+.setting-hint-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.reset-row {
+    background: none;
+    border: none;
+    padding: 0;
+    margin-top: 2px;
+}
+
+/* ── Reset Confirmation Modal ── */
+.confirm-modal {
+    position: absolute;
+    inset: 0;
+    background: rgba(4, 6, 16, 0.90);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-lg);
+    z-index: 25;
+    padding: 16px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.confirm-modal.hidden {
+    display: none;
+}
+
+.confirm-card {
+    background: rgba(14, 18, 36, 0.96);
+    border: 1px solid var(--red-glow);
+    border-radius: var(--radius-md);
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 0 30px rgba(255, 45, 85, 0.25);
+    max-width: 280px;
+    text-align: center;
+}
+
+.confirm-text {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.confirm-actions {
+    display: flex;
+    gap: 10px;
+    width: 100%;
+}
+
+.confirm-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border-radius: var(--radius-sm);
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--tf);
+    touch-action: manipulation;
+}
+
+.yes-btn {
+    border: 1px solid var(--red);
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 0 10px var(--red-glow);
+}
+.yes-btn:hover {
+    box-shadow: 0 0 20px var(--red);
+}
+
+.no-btn {
+    border: 1px solid var(--border-dim);
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+}
+.no-btn:hover {
+    color: var(--text);
+    border-color: var(--text);
+}
+
+/* ── Arabic Typography & RTL support ── */
+html[dir="rtl"] {
+    font-family: var(--font-ar);
+}
+html[dir="rtl"] button,
+html[dir="rtl"] input {
+    font-family: var(--font-ar);
+}
+
+/* ── Particle Burst ── */
+.particle-burst {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    overflow: hidden;
+}
+
+.burst-dot {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    pointer-events: none;
+    animation: burst-out 0.5s ease forwards;
+}
+
+@keyframes burst-out {
+    0%   { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
+/* ── D-Pad Touch Controls (Base) ── */
+.dpad-container {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.dpad {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(3px, 0.8vmin, 5px);
+}
+
+.dpad-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: clamp(3px, 0.8vmin, 5px);
+}
+
+.dpad-btn {
+    width: clamp(50px, 14vmin, 72px);
+    height: clamp(50px, 14vmin, 72px);
+    border-radius: 10px;
+    background: rgba(0, 240, 255, 0.08);
+    border: 1.5px solid var(--border-glow);
+    color: var(--cyan);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s, box-shadow 0.1s, transform 0.08s;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    position: relative;
+}
+
+/* Invisible extended tap area */
+.dpad-btn::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+}
+
+.dpad-btn svg {
+    width: 55%;
+    height: 55%;
+    pointer-events: none;
+}
+
+.dpad-btn:hover {
+    background: var(--cyan-dim);
+}
+
+.dpad-btn:active,
+.dpad-btn.pressed {
+    background: rgba(0, 240, 255, 0.25);
+    box-shadow: 0 0 16px var(--cyan-glow);
+    transform: scale(0.92);
+    border-color: var(--cyan);
+}
+
+.dpad-center {
+    width: clamp(50px, 14vmin, 72px);
+    height: clamp(50px, 14vmin, 72px);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* ── Footer Keyboard Hints ── */
+.footer-hints {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: clamp(8px, 1.3vw, 16px);
+    font-size: clamp(0.74rem, 0.95vw + 0.1rem, 0.92rem);
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+.key-chip-sm {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    font-size: clamp(0.68rem, 0.88vw + 0.08rem, 0.86rem);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.hint-sep {
+    color: rgba(255, 255, 255, 0.2);
+}
+
+/* ════════════════════════════════════════════════════════════
+   ADAPTIVE CAPABILITY & VIEWPORT ARCHITECTURE
+   ════════════════════════════════════════════════════════════ */
+
+/* ── Touch / Coarse Pointer Devices & Touch-Active Mode ── */
+@media (hover: none) and (pointer: coarse), (pointer: coarse) {
+    .dpad-container { display: flex; }
+    .desktop-hints  { display: none; }
+    .mobile-hints   { display: flex; }
+    .desktop-only   { display: none; }
+    .icon-btn       { width: 46px; height: 46px; }
+    .icon-btn svg   { width: 22px; height: 22px; }
+}
+
+body.touch-active .dpad-container {
+    display: flex;
+}
+
+body.touch-active .desktop-hints {
+    display: none;
+}
+
+body.touch-active .mobile-hints {
+    display: flex;
+}
+
+body.touch-active .desktop-only {
+    display: none;
+}
+
+/* ── 1. PORTRAIT TOUCH SCREENS (Phones AND Tablets e.g. 768×1024, 430×932, 360×800) ── */
+@media (hover: none) and (pointer: coarse) and (orientation: portrait),
+       (pointer: coarse) and (orientation: portrait) {
+    :root {
+        --side-pad: clamp(8px, 2.5vw, 24px);
+        /* Strictly reserve space for header (~65px) + D-Pad (~180-220px) + padding/gaps (~50px) */
+        --board-size: clamp(
+            220px,
+            min(
+                calc(100vw - (var(--side-pad) * 2) - 16px),
+                calc(100dvh - clamp(270px, 33vh, 360px)),
+                600px
+            ),
+            600px
+        );
+    }
+
+    body {
+        padding: clamp(4px, 1.5vmin, 12px);
+    }
+
+    .game-container {
+        gap: clamp(6px, 1.5vmin, 14px);
+        padding: clamp(10px, 2vmin, 16px) var(--side-pad) clamp(4px, 1vmin, 10px);
+        width: min(calc(var(--board-size) + var(--side-pad) * 2), calc(100vw - 12px));
+    }
+
+    /* 2-Row Responsive Header for Touch Portrait */
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 6px;
+    }
+
+    .title-block {
+        text-align: center;
+    }
+
+    .game-title {
+        font-size: clamp(1.25rem, 5vw, 1.8rem);
+    }
+
+    .game-subtitle {
+        font-size: clamp(0.5rem, 1.5vw, 0.65rem);
+        letter-spacing: 3px;
+        margin-top: 2px;
+    }
+
+    .hud-right {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        gap: 6px;
+    }
+
+    .score-board {
+        gap: 6px;
+    }
+
+    .score-box {
+        padding: 6px 12px;
+        min-width: 60px;
+    }
+
+    .label {
+        font-size: 0.56rem;
+    }
+
+    .value {
+        font-size: 1.25rem;
+    }
+
+    .controls-top-row,
+    .controls-row {
+        gap: 6px;
+    }
+
+    .icon-btn {
+        width: 44px;
+        height: 44px;
+    }
+
+    /* Adaptive D-Pad in portrait */
+    .dpad-btn {
+        width: clamp(56px, min(17vw, 7.8vh), 72px);
+        height: clamp(56px, min(17vw, 7.8vh), 72px);
+    }
+
+    .dpad-center {
+        width: clamp(56px, min(17vw, 7.8vh), 72px);
+        height: clamp(56px, min(17vw, 7.8vh), 72px);
+    }
+
+    .overlay-card {
+        padding: clamp(12px, 2.5vmin, 20px) clamp(14px, 3vmin, 24px);
+        gap: 8px;
+    }
+
+    .overlay-title {
+        font-size: clamp(1.3rem, 6vw, 2.2rem);
+    }
+
+    .glow-btn {
+        padding: 11px 24px;
+        font-size: 0.9rem;
+        min-height: 44px;
+    }
+}
+
+/* Also support dynamic JS touch-active class in portrait */
+body.touch-active:not(.non-portrait) {
+    --side-pad: clamp(8px, 2.5vw, 24px);
+}
+
+/* ── 2. LANDSCAPE TOUCH SCREENS (Tablets 1024×768, Phones 932×430, 844×390, etc.) ── */
+@media (hover: none) and (pointer: coarse) and (orientation: landscape),
+       (pointer: coarse) and (orientation: landscape) {
+    :root {
+        --side-pad: clamp(8px, 1.5vw, 16px);
+        /* Board calculates dynamically from available height */
+        --board-size: clamp(
+            180px,
+            min(
+                calc(100dvh - clamp(60px, 11vh, 90px)),
+                calc(100vw - clamp(180px, 26vw, 280px)),
+                620px
+            ),
+            620px
+        );
+    }
+
+    body {
+        padding: 4px clamp(6px, 1.2vw, 16px);
+    }
+
+    .game-container {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        gap: 0;
+        column-gap: clamp(10px, 2vw, 24px);
+        row-gap: 2px;
+        padding: 6px var(--side-pad) 6px;
+        width: auto;
+        max-width: 100%;
+    }
+
+    .header {
+        width: 100%;
+        order: -1;
+        gap: 12px;
+        margin-bottom: 2px;
+    }
+
+    .game-title {
+        font-size: clamp(1.05rem, 2.5vh + 0.3rem, 1.6rem);
+        letter-spacing: 1.5px;
+    }
+
+    .game-subtitle {
+        display: none;
+    }
+
+    .score-box {
+        padding: 4px 10px;
+        min-width: 50px;
+    }
+
+    .label {
+        font-size: 0.54rem;
+    }
+
+    .value {
+        font-size: clamp(0.95rem, 2.2vh, 1.35rem);
+    }
+
+    .controls-top-row,
+    .controls-row {
+        gap: 6px;
+    }
+
+    .icon-btn {
+        width: clamp(34px, 5.5vh, 44px);
+        height: clamp(34px, 5.5vh, 44px);
+    }
+
+    .icon-btn svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .canvas-wrapper {
+        order: 0;
+    }
+
+    .dpad-container {
+        order: 1;
+        align-self: center;
+        padding: 0;
+        padding-left: 4px;
+    }
+
+    .footer-hints {
+        display: none;
+    }
+
+    /* Side D-Pad scaled to available height */
+    .dpad-btn {
+        width: clamp(42px, min(12.5vh, 9vw), 66px);
+        height: clamp(42px, min(12.5vh, 9vw), 66px);
+        border-radius: 8px;
+    }
+
+    .dpad-center {
+        width: clamp(42px, min(12.5vh, 9vw), 66px);
+        height: clamp(42px, min(12.5vh, 9vw), 66px);
+        border-radius: 8px;
+    }
+
+    .overlay-card {
+        padding: 10px 14px;
+        gap: 6px;
+    }
+
+    .overlay-title {
+        font-size: clamp(1.2rem, 4.5vh, 1.8rem);
+    }
+
+    .glow-btn {
+        padding: 7px 16px;
+        font-size: 0.82rem;
+        min-height: 36px;
+    }
+}
+
+/* ── 3. EXTRA SMALL PHONES (≤360px Portrait) ── */
+@media (max-width: 360px) and (orientation: portrait) {
+    :root {
+        --side-pad: 4px;
+        --board-size: min(calc(100vw - 12px), calc(100dvh - 265px));
+    }
+
+    body {
+        padding: 4px;
+    }
+
+    .game-container {
+        gap: 4px;
+        padding: 6px var(--side-pad) 2px;
+    }
+
+    .game-title {
+        font-size: 1.15rem;
+    }
+
+    .score-box {
+        padding: 4px 8px;
+        min-width: 52px;
+    }
+
+    .value {
+        font-size: 1.1rem;
+    }
+
+    .dpad-btn {
+        width: clamp(48px, 14vw, 58px);
+        height: clamp(48px, 14vw, 58px);
+    }
+
+    .dpad-center {
+        width: clamp(48px, 14vw, 58px);
+        height: clamp(48px, 14vw, 58px);
+    }
+}
+
+/* ── 4. LARGE DESKTOP & HIGH-RES MONITORS (Non-touch / Fine Pointer) ── */
+@media (hover: hover) and (pointer: fine) and (min-width: 1400px) and (min-height: 900px) {
+    :root {
+        --chrome-v: 260px;
+        --side-pad: 44px;
+        --board-size: clamp(620px, min(calc(100dvh - var(--chrome-v)), 60vw), 780px);
+    }
+
+    .game-container {
+        gap: 24px;
+        padding: 34px var(--side-pad) 26px;
+    }
+
+    .game-title {
+        font-size: 2.4rem;
+    }
+
+    .value {
+        font-size: 2.1rem;
+    }
+
+    .icon-btn {
+        width: 54px;
+        height: 54px;
+    }
+
+    .icon-btn svg {
+        width: 24px;
+        height: 24px;
+    }
+}

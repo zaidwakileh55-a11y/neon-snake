@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <!-- viewport-fit=cover for notches, Dynamic Island, and edge-to-edge mobile screens -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Neon Snake – A premium cyberpunk-style Snake game built with HTML5 Canvas.">
+    <!-- Web app capabilities -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#080a12">
+    <title>Neon Snake</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Ambient background floating light particles -->
+    <div class="bg-particles" aria-hidden="true">
+        <div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div>
+        <div class="particle"></div><div class="particle"></div>
+    </div>
+
+    <div class="game-container" id="game-container">
+
+        <!-- ── Adaptive Header ── -->
+        <header class="header" id="game-header">
+            <div class="title-block">
+                <h1 class="game-title">NEON SNAKE</h1>
+                <p class="game-subtitle" data-i18n="subtitle">CYBERPUNK EDITION</p>
+            </div>
+            <div class="hud-right">
+                <div class="score-board">
+                    <div class="score-box" id="score-box-main">
+                        <span class="label" data-i18n="score">SCORE</span>
+                        <span id="score" class="value">0</span>
+                    </div>
+                    <div class="score-box score-box-best">
+                        <span class="label" data-i18n="best">BEST</span>
+                        <span id="high-score" class="value">0</span>
+                    </div>
+                </div>
+                <div class="controls-block" id="controls-block">
+                    <div class="controls-top-row">
+                        <button id="pause-btn" class="icon-btn" title="Pause (P / Space)" aria-label="Pause game">
+                            <svg id="pause-icon" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                            <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon"><polygon points="5,3 19,12 5,21"/></svg>
+                        </button>
+                        <button id="sound-btn" class="icon-btn" title="Toggle Sound (M)" aria-label="Toggle sound">
+                            <svg id="sound-on-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                            </svg>
+                            <svg id="sound-off-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon">
+                                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                            </svg>
+                        </button>
+                    </div>
+                    <div class="volume-inline-control" aria-label="Music Volume">
+                        <button id="vol-down-btn" class="vol-mini-btn" title="Decrease Volume" aria-label="Decrease Volume">−</button>
+                        <span id="vol-display" class="vol-mini-display">2%</span>
+                        <button id="vol-up-btn" class="vol-mini-btn" title="Increase Volume" aria-label="Increase Volume">+</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ── Main Board Area ── -->
+        <main class="canvas-wrapper" id="canvas-wrapper">
+            <canvas id="gameCanvas" width="420" height="420" aria-label="Snake game board"></canvas>
+
+            <!-- Particle burst container for food collection -->
+            <div id="particle-burst" class="particle-burst" aria-hidden="true"></div>
+
+            <!-- ── 1. MAIN MENU SCREEN OVERLAY ── -->
+            <div id="main-menu-screen" class="overlay" role="dialog" aria-modal="true" aria-label="Main menu">
+                <div class="overlay-card menu-card slide-in">
+                    <h2 class="overlay-title glow-cyan">NEON SNAKE</h2>
+                    <p class="overlay-subtitle" data-i18n="subtitle">CYBERPUNK EDITION</p>
+
+                    <div class="menu-actions">
+                        <button id="menu-play-btn" class="glow-btn menu-btn" data-i18n="play">▶ PLAY</button>
+                        <button id="menu-settings-btn" class="glow-btn secondary-btn menu-btn" data-i18n="settings">⚙ SETTINGS</button>
+                    </div>
+
+                    <!-- Language Selector Pill -->
+                    <div class="lang-toggle-group" aria-label="Language Selector">
+                        <button id="lang-btn-en" class="lang-btn active" data-lang="en">ENGLISH</button>
+                        <span class="lang-divider">|</span>
+                        <button id="lang-btn-ar" class="lang-btn" data-lang="ar">العربية</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── 2. MODE SELECT SCREEN OVERLAY ── -->
+            <div id="mode-select-screen" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Mode Select">
+                <div class="overlay-card mode-select-card slide-in">
+                    <button id="mode-select-close-btn" class="modal-close-btn" title="Close" aria-label="Close Mode Select">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                    <h2 class="overlay-title glow-cyan" data-i18n="selectMode">SELECT MODE</h2>
+
+                    <div class="modes-list">
+                        <!-- Classic Mode Card -->
+                        <button id="mode-classic-btn" class="mode-card active-mode" aria-label="Classic Mode">
+                            <div class="mode-card-header">
+                                <span class="mode-name glow-green" data-i18n="modeClassic">CLASSIC</span>
+                                <span class="mode-badge" data-i18n="modeReady">PLAY</span>
+                            </div>
+                            <p class="mode-desc" data-i18n="modeClassicDesc">The original Neon Snake experience.</p>
+                        </button>
+
+                        <!-- Coming Soon Disabled Mode Card -->
+                        <div class="mode-card disabled-mode" aria-disabled="true" role="button" tabindex="-1">
+                            <div class="mode-card-header">
+                                <span class="mode-name mode-locked" data-i18n="modeComingSoon">🔒 COMING SOON</span>
+                            </div>
+                            <p class="mode-desc" data-i18n="modeComingSoonDesc">More game modes under development.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── 2. SETTINGS SCREEN OVERLAY ── -->
+            <div id="settings-screen" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Settings">
+                <div class="overlay-card settings-card slide-in">
+                    <button id="settings-close-btn" class="modal-close-btn" title="Close" aria-label="Close Settings">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                    <h2 class="overlay-title glow-cyan" data-i18n="settingsTitle">SETTINGS</h2>
+
+                    <div class="settings-list">
+                        <!-- Music Toggle -->
+                        <div class="setting-row">
+                            <span class="setting-label" data-i18n="music">MUSIC</span>
+                            <button id="setting-music-btn" class="toggle-pill active" aria-label="Toggle Music">
+                                <span id="setting-music-text" data-i18n="on">ON</span>
+                            </button>
+                        </div>
+
+                        <!-- Sound Effects Toggle -->
+                        <div class="setting-row">
+                            <span class="setting-label" data-i18n="sfx">SOUND EFFECTS</span>
+                            <button id="setting-sfx-btn" class="toggle-pill active" aria-label="Toggle Sound Effects">
+                                <span id="setting-sfx-text" data-i18n="on">ON</span>
+                            </button>
+                        </div>
+
+                        <!-- Music Volume Stepper -->
+                        <div class="setting-row">
+                            <span class="setting-label" data-i18n="volume">MUSIC VOLUME</span>
+                            <div class="volume-inline-control settings-vol-control" aria-label="Music Volume">
+                                <button id="setting-vol-down-btn" class="vol-mini-btn" title="Decrease Volume" aria-label="Decrease Volume">−</button>
+                                <span id="setting-vol-display" class="vol-mini-display">2%</span>
+                                <button id="setting-vol-up-btn" class="vol-mini-btn" title="Increase Volume" aria-label="Increase Volume">+</button>
+                            </div>
+                        </div>
+
+                        <!-- Controls Reference Box -->
+                        <div class="setting-box">
+                            <span class="setting-box-title" data-i18n="controls">CONTROLS</span>
+                            <div class="setting-hints-grid">
+                                <div class="setting-hint-item">
+                                    <span class="key-chip-sm" data-i18n="arrowsOrWasd">↑↓←→ / WASD</span>
+                                    <span data-i18n="move">Move</span>
+                                </div>
+                                <div class="setting-hint-item">
+                                    <span class="key-chip-sm" data-i18n="swipeOrDpad">SWIPE / D-PAD</span>
+                                    <span data-i18n="move">Move</span>
+                                </div>
+                                <div class="setting-hint-item">
+                                    <span class="key-chip-sm">P / Space</span>
+                                    <span data-i18n="pause">Pause</span>
+                                </div>
+                                <div class="setting-hint-item">
+                                    <span class="key-chip-sm">M</span>
+                                    <span data-i18n="toggleSound">Sound</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Reset High Score Button -->
+                        <div class="setting-row reset-row">
+                            <button id="setting-reset-hs-btn" class="danger-btn" data-i18n="resetHighScore">🗑 RESET BEST SCORE</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reset Confirmation Dialog Modal -->
+                <div id="reset-hs-modal" class="confirm-modal hidden" role="dialog" aria-label="Confirm Reset">
+                    <div class="confirm-card">
+                        <p class="confirm-text" data-i18n="resetConfirmText">Reset best score to 0?</p>
+                        <div class="confirm-actions">
+                            <button id="reset-confirm-yes" class="confirm-btn yes-btn" data-i18n="confirmYes">YES, RESET</button>
+                            <button id="reset-confirm-no" class="confirm-btn no-btn" data-i18n="confirmCancel">CANCEL</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── 3. PAUSE SCREEN OVERLAY ── -->
+            <div id="pause-screen" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Pause screen">
+                <div class="overlay-card slide-in">
+                    <h2 class="overlay-title glow-cyan" data-i18n="paused">PAUSED</h2>
+                    <button id="resume-btn" class="glow-btn" data-i18n="resume">▶ RESUME</button>
+                    <button id="pause-menu-btn" class="glow-btn secondary-btn" data-i18n="mainMenu">🏠 MAIN MENU</button>
+                </div>
+            </div>
+
+            <!-- ── 4. GAME OVER SCREEN OVERLAY ── -->
+            <div id="game-over-screen" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Game over screen">
+                <div class="overlay-card slide-in">
+                    <h2 class="overlay-title glow-red" data-i18n="gameOver">GAME OVER</h2>
+                    <div id="new-high-score-badge" class="badge-new-hs hidden" data-i18n="newBest">🏆 NEW BEST!</div>
+                    <div class="final-scores">
+                        <div class="final-score-row">
+                            <span class="fs-label" data-i18n="score">SCORE</span>
+                            <span id="final-score" class="fs-value">0</span>
+                        </div>
+                        <div class="final-score-row">
+                            <span class="fs-label" data-i18n="best">BEST</span>
+                            <span id="final-high-score" class="fs-value fs-best">0</span>
+                        </div>
+                    </div>
+                    <button id="restart-btn" class="glow-btn" data-i18n="playAgain">↺ PLAY AGAIN</button>
+                    <button id="gameover-menu-btn" class="glow-btn secondary-btn" data-i18n="mainMenu">🏠 MAIN MENU</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- ── Adaptive D-Pad touch controls ── -->
+        <div class="dpad-container" id="dpad-container" aria-label="Touch directional controls">
+            <div class="dpad">
+                <button class="dpad-btn dpad-up" id="dpad-up" aria-label="Move up">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>
+                </button>
+                <div class="dpad-row">
+                    <button class="dpad-btn dpad-left" id="dpad-left" aria-label="Move left">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M14 7l-5 5 5 5z"/></svg>
+                    </button>
+                    <div class="dpad-center" aria-hidden="true"></div>
+                    <button class="dpad-btn dpad-right" id="dpad-right" aria-label="Move right">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 17l5-5-5-5z"/></svg>
+                    </button>
+                </div>
+                <button class="dpad-btn dpad-down" id="dpad-down" aria-label="Move down">
+                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- ── Footer keyboard instructions (Desktop / Laptop / Large screens) ── -->
+        <footer class="footer-hints desktop-only">
+            <span><span class="key-chip-sm" data-i18n="arrowsOrWasd">↑↓←→ / WASD</span> <span data-i18n="move">Move</span></span>
+            <span class="hint-sep">·</span>
+            <span><span class="key-chip-sm">P / Space</span> <span data-i18n="pause">Pause</span></span>
+            <span class="hint-sep">·</span>
+            <span><span class="key-chip-sm">M</span> <span data-i18n="toggleSound">Sound</span></span>
+        </footer>
+
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
