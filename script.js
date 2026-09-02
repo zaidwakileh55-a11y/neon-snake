@@ -37,18 +37,10 @@ const soundOnIcon      = document.getElementById('sound-on-icon');
 const soundOffIcon     = document.getElementById('sound-off-icon');
 const pauseIcon        = document.getElementById('pause-icon');
 const playIcon         = document.getElementById('play-icon');
-const volDownBtn       = document.getElementById('vol-down-btn');
-const volUpBtn         = document.getElementById('vol-up-btn');
-const volDisplay       = document.getElementById('vol-display');
 
 // Settings Elements
-const settingMusicBtn    = document.getElementById('setting-music-btn');
-const settingMusicText   = document.getElementById('setting-music-text');
 const settingSfxBtn      = document.getElementById('setting-sfx-btn');
 const settingSfxText     = document.getElementById('setting-sfx-text');
-const settingVolDownBtn  = document.getElementById('setting-vol-down-btn');
-const settingVolUpBtn    = document.getElementById('setting-vol-up-btn');
-const settingVolDisplay  = document.getElementById('setting-vol-display');
 const settingResetHsBtn  = document.getElementById('setting-reset-hs-btn');
 const resetConfirmYes    = document.getElementById('reset-confirm-yes');
 const resetConfirmNo     = document.getElementById('reset-confirm-no');
@@ -86,9 +78,7 @@ const i18n = {
         modeComingSoonDesc: 'More game modes under development.',
         modeReady: 'PLAY',
         settingsTitle: 'SETTINGS',
-        music: 'MUSIC',
         sfx: 'SOUND EFFECTS',
-        volume: 'MUSIC VOLUME',
         controls: 'CONTROLS',
         arrowsOrWasd: '↑↓←→ / WASD',
         swipeOrDpad: 'SWIPE / D-PAD',
@@ -122,9 +112,7 @@ const i18n = {
         modeComingSoonDesc: 'المزيد من أنماط اللعب قيد التطوير.',
         modeReady: 'لعب',
         settingsTitle: 'الإعدادات',
-        music: 'الموسيقى',
         sfx: 'المؤثرات الصوتية',
-        volume: 'مستوى صوت الموسيقى',
         controls: 'أزرار التحكم',
         arrowsOrWasd: '↑↓←→ / WASD',
         swipeOrDpad: 'السحب / الأسهم',
@@ -250,23 +238,11 @@ let foodPulse = 0;
 let isNewHS   = false;
 
 /* ══════════════════════════════════════════════════════════
-   SOUND & MUSIC SYSTEM
+   SOUND SYSTEM
    ══════════════════════════════════════════════════════════ */
 let audioCtx = null;
-let bgMusic = null;
 let soundEnabled = localStorage.getItem('snakeSoundEnabled') !== 'false';
-let musicEnabled = localStorage.getItem('snakeMusicEnabled') !== 'false';
 let sfxEnabled   = localStorage.getItem('snakeSfxEnabled') !== 'false';
-let bgmVolumePercent = parseInt(localStorage.getItem('snakeBgmVolume'), 10);
-if (isNaN(bgmVolumePercent)) bgmVolumePercent = 2;
-
-function applyVolumeUI() {
-    volDisplay.textContent = bgmVolumePercent + '%';
-    if (settingVolDisplay) settingVolDisplay.textContent = bgmVolumePercent + '%';
-    if (bgMusic) {
-        bgMusic.volume = (soundEnabled && musicEnabled) ? bgmVolumePercent / 100 : 0;
-    }
-}
 
 function getAudioCtx() {
     if (!audioCtx) {
@@ -321,10 +297,6 @@ function updateSettingTogglesUI() {
     const onText  = i18n[currentLang] ? i18n[currentLang].on : 'ON';
     const offText = i18n[currentLang] ? i18n[currentLang].off : 'OFF';
 
-    if (settingMusicBtn && settingMusicText) {
-        settingMusicBtn.classList.toggle('active', musicEnabled);
-        settingMusicText.textContent = musicEnabled ? onText : offText;
-    }
     if (settingSfxBtn && settingSfxText) {
         settingSfxBtn.classList.toggle('active', sfxEnabled);
         settingSfxText.textContent = sfxEnabled ? onText : offText;
@@ -336,41 +308,10 @@ soundBtn.addEventListener('click', () => {
     sounds.click();
     soundEnabled = !soundEnabled;
     localStorage.setItem('snakeSoundEnabled', soundEnabled);
-    if (bgMusic) {
-        bgMusic.volume = (soundEnabled && musicEnabled) ? bgmVolumePercent / 100 : 0;
-    }
     applySoundUI();
 });
 
-// Header Volume Steppers
-volDownBtn.addEventListener('click', () => {
-    sounds.click();
-    if (bgmVolumePercent > 0) {
-        bgmVolumePercent -= 1;
-        localStorage.setItem('snakeBgmVolume', bgmVolumePercent);
-        applyVolumeUI();
-    }
-});
-
-volUpBtn.addEventListener('click', () => {
-    sounds.click();
-    if (bgmVolumePercent < 20) {
-        bgmVolumePercent += 1;
-        localStorage.setItem('snakeBgmVolume', bgmVolumePercent);
-        applyVolumeUI();
-    }
-});
-
 // Settings Screen Controls
-if (settingMusicBtn) {
-    settingMusicBtn.addEventListener('click', () => {
-        sounds.click();
-        musicEnabled = !musicEnabled;
-        localStorage.setItem('snakeMusicEnabled', musicEnabled);
-        updateSettingTogglesUI();
-        applyVolumeUI();
-    });
-}
 
 if (settingSfxBtn) {
     settingSfxBtn.addEventListener('click', () => {
@@ -378,28 +319,6 @@ if (settingSfxBtn) {
         sfxEnabled = !sfxEnabled;
         localStorage.setItem('snakeSfxEnabled', sfxEnabled);
         updateSettingTogglesUI();
-    });
-}
-
-if (settingVolDownBtn) {
-    settingVolDownBtn.addEventListener('click', () => {
-        sounds.click();
-        if (bgmVolumePercent > 0) {
-            bgmVolumePercent -= 1;
-            localStorage.setItem('snakeBgmVolume', bgmVolumePercent);
-            applyVolumeUI();
-        }
-    });
-}
-
-if (settingVolUpBtn) {
-    settingVolUpBtn.addEventListener('click', () => {
-        sounds.click();
-        if (bgmVolumePercent < 20) {
-            bgmVolumePercent += 1;
-            localStorage.setItem('snakeBgmVolume', bgmVolumePercent);
-            applyVolumeUI();
-        }
     });
 }
 
@@ -446,7 +365,6 @@ function applyPauseUI(paused) {
    ══════════════════════════════════════════════════════════ */
 function showMainMenu() {
     if (gameLoopInterval) clearInterval(gameLoopInterval);
-    if (bgMusic) bgMusic.pause();
     
     isPaused    = false;
     isGameOver  = false;
@@ -482,7 +400,6 @@ function hideModeSelect() {
 function showSettings() {
     sounds.click();
     updateSettingTogglesUI();
-    applyVolumeUI();
     settingsScreen.classList.remove('hidden');
 }
 
@@ -527,7 +444,6 @@ highScoreEl.textContent = highScore;
 
 setLanguage(currentLang);
 applySoundUI();
-applyVolumeUI();
 initState();
 placeFood();
 resizeCanvas();
@@ -538,14 +454,6 @@ requestAnimationFrame(() => { resizeCanvas(); drawFrame(); });
    ══════════════════════════════════════════════════════════ */
 function startGame() {
     getAudioCtx();
-    if (!bgMusic) {
-        bgMusic = new Audio('assets/music/4 Solar Wind Lullaby LOOP.ogg');
-        bgMusic.loop = true;
-        bgMusic.volume = (soundEnabled && musicEnabled) ? bgmVolumePercent / 100 : 0;
-        bgMusic.play().catch(e => console.log('Audio play failed:', e));
-    } else if (bgMusic.paused && soundEnabled && musicEnabled) {
-        bgMusic.play().catch(e => console.log('Audio play failed:', e));
-    }
     sounds.start();
     initState();
     placeFood();
@@ -565,18 +473,12 @@ function togglePause() {
         isPaused = false;
         pauseScreen.classList.add('hidden');
         applyPauseUI(false);
-        if (bgMusic && soundEnabled && musicEnabled) {
-            bgMusic.play().catch(e => console.log('Audio play failed:', e));
-        }
         if (gameLoopInterval) clearInterval(gameLoopInterval);
         gameLoopInterval = setInterval(gameLoop, gameSpeed);
     } else {
         isPaused = true;
         pauseScreen.classList.remove('hidden');
         applyPauseUI(true);
-        if (bgMusic) {
-            bgMusic.pause();
-        }
         clearInterval(gameLoopInterval);
     }
 }
@@ -841,31 +743,93 @@ document.addEventListener('keydown', e => {
 });
 
 /* ══════════════════════════════════════════════════════════
-   TOUCH SWIPE ON BOARD
+   TOUCH SWIPE ON BOARD (Low-latency, Multi-directional)
    ══════════════════════════════════════════════════════════ */
-const MIN_SWIPE = 16;
+const SWIPE_THRESHOLD = 22;
 let touchStartX = 0;
 let touchStartY = 0;
+let touchActive = false;
+let touchSwiped = false;
 
-canvas.addEventListener('touchstart', e => {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-}, { passive: true });
+function handleTouchStart(e) {
+    if (e.touches.length > 1) return;
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+    touchActive = true;
+    touchSwiped = false;
+}
 
-canvas.addEventListener('touchend', e => {
-    const swipeDx = e.changedTouches[0].clientX - touchStartX;
-    const swipeDy = e.changedTouches[0].clientY - touchStartY;
-    const absDx   = Math.abs(swipeDx);
-    const absDy   = Math.abs(swipeDy);
+function handleTouchMove(e) {
+    if (!touchActive || e.touches.length > 1) return;
 
-    if (Math.max(absDx, absDy) < MIN_SWIPE) return;
-
-    if (absDx > absDy) {
-        handleDir(swipeDx > 0 ? 'right' : 'left');
-    } else {
-        handleDir(swipeDy > 0 ? 'down' : 'up');
+    // Prevent mobile page scroll/rubber-banding while interacting with board
+    if (e.cancelable) {
+        e.preventDefault();
     }
-}, { passive: true });
+
+    if (touchStartX === 0 && touchStartY === 0) return;
+
+    const t = e.touches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    if (Math.max(absDx, absDy) >= SWIPE_THRESHOLD) {
+        if (absDx > absDy) {
+            handleDir(dx > 0 ? 'right' : 'left');
+        } else {
+            handleDir(dy > 0 ? 'down' : 'up');
+        }
+        // Continuous steering: update anchor point to current position
+        touchStartX = t.clientX;
+        touchStartY = t.clientY;
+        touchSwiped = true;
+    }
+}
+
+function handleTouchEnd(e) {
+    if (!touchActive) return;
+
+    if (!touchSwiped && e.changedTouches && e.changedTouches.length > 0) {
+        const t = e.changedTouches[0];
+        const dx = t.clientX - touchStartX;
+        const dy = t.clientY - touchStartY;
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+
+        // Allow slightly lower threshold for quick flick releases
+        if (Math.max(absDx, absDy) >= (SWIPE_THRESHOLD * 0.75)) {
+            if (absDx > absDy) {
+                handleDir(dx > 0 ? 'right' : 'left');
+            } else {
+                handleDir(dy > 0 ? 'down' : 'up');
+            }
+        }
+    }
+
+    touchActive = false;
+    touchStartX = 0;
+    touchStartY = 0;
+    touchSwiped = false;
+}
+
+function handleTouchCancel() {
+    touchActive = false;
+    touchStartX = 0;
+    touchStartY = 0;
+    touchSwiped = false;
+}
+
+// Bind swipe gestures with non-passive listeners for preventDefault
+[canvas, wrapper].forEach(target => {
+    if (!target) return;
+    target.addEventListener('touchstart', handleTouchStart, { passive: false });
+    target.addEventListener('touchmove',  handleTouchMove,  { passive: false });
+    target.addEventListener('touchend',    handleTouchEnd,    { passive: false });
+    target.addEventListener('touchcancel', handleTouchCancel, { passive: false });
+});
 
 /* ══════════════════════════════════════════════════════════
    D-PAD CONTROLS (Pointer Events for Touch & Mouse)

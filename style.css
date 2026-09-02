@@ -303,78 +303,6 @@ body {
     display: none;
 }
 
-/* ── Inline Volume Controls (Centered Row Underneath Pause & Mute) ── */
-.volume-inline-control {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: clamp(4px, 0.8vw, 8px);
-    user-select: none;
-    -webkit-user-select: none;
-    white-space: nowrap;
-}
-
-.vol-mini-btn {
-    width: clamp(28px, 3.4vw, 36px);
-    height: clamp(28px, 3.4vw, 36px);
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid var(--border-dim);
-    color: var(--text-muted);
-    font-family: var(--font);
-    font-size: clamp(1.05rem, 1.3vw, 1.3rem);
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    transition: all var(--tf);
-    position: relative;
-    touch-action: manipulation;
-    padding: 0;
-}
-
-/* Extended touch tap target */
-.vol-mini-btn::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-}
-
-.vol-mini-btn:hover {
-    background: var(--cyan-dim);
-    border-color: var(--border-glow);
-    color: var(--cyan);
-    box-shadow: 0 0 14px var(--cyan-glow);
-}
-
-.vol-mini-btn:active {
-    transform: scale(0.9);
-}
-
-.vol-mini-display {
-    color: var(--cyan);
-    font-weight: 800;
-    font-size: clamp(0.72rem, 0.9vw, 0.86rem);
-    min-width: clamp(22px, 2.6vw, 30px);
-    text-align: center;
-    font-family: var(--font);
-    text-shadow: 0 0 6px var(--cyan-glow);
-    line-height: 1;
-}
-
-@media (hover: none) and (pointer: coarse), (pointer: coarse) {
-    .vol-mini-btn {
-        width: clamp(28px, 6.5vmin, 34px);
-        height: clamp(28px, 6.5vmin, 34px);
-        font-size: clamp(1.1rem, 2.8vmin, 1.3rem);
-    }
-    .vol-mini-display {
-        font-size: clamp(0.74rem, 1.8vmin, 0.86rem);
-        min-width: clamp(22px, 5vmin, 28px);
-    }
-}
 
 /* ── Canvas Wrapper (Main Square Board Area) ── */
 .canvas-wrapper {
@@ -1109,7 +1037,7 @@ html[dir="rtl"] input {
     100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
 }
 
-/* ── D-Pad Touch Controls (Base) ── */
+/* ── D-Pad Touch Controls (Compact Arcade Cross Layout) ── */
 .dpad-container {
     display: none;
     align-items: center;
@@ -1117,26 +1045,28 @@ html[dir="rtl"] input {
     padding: 2px 0;
     user-select: none;
     -webkit-user-select: none;
+    direction: ltr;
+    touch-action: none;
 }
 
 .dpad {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: clamp(3px, 0.8vmin, 5px);
+    gap: 2px;
 }
 
 .dpad-row {
     display: flex;
     flex-direction: row;
     align-items: center;
-    gap: clamp(3px, 0.8vmin, 5px);
+    gap: 2px;
 }
 
 .dpad-btn {
-    width: clamp(50px, 14vmin, 72px);
-    height: clamp(50px, 14vmin, 72px);
-    border-radius: 10px;
+    width: clamp(42px, 11vmin, 56px);
+    height: clamp(42px, 11vmin, 56px);
+    border-radius: 8px;
     background: rgba(0, 240, 255, 0.08);
     border: 1.5px solid var(--border-glow);
     color: var(--cyan);
@@ -1145,23 +1075,31 @@ html[dir="rtl"] input {
     align-items: center;
     justify-content: center;
     transition: background 0.1s, box-shadow 0.1s, transform 0.08s;
-    touch-action: manipulation;
+    touch-action: none;
     user-select: none;
     -webkit-user-select: none;
+    -webkit-touch-callout: none;
     position: relative;
 }
+
+/* Individual cross arm rounding for true cohesive D-Pad look */
+.dpad-btn.dpad-up    { border-radius: 10px 10px 4px 4px; }
+.dpad-btn.dpad-down  { border-radius: 4px 4px 10px 10px; }
+.dpad-btn.dpad-left  { border-radius: 10px 4px 4px 10px; }
+.dpad-btn.dpad-right { border-radius: 4px 10px 10px 4px; }
 
 /* Invisible extended tap area */
 .dpad-btn::after {
     content: '';
     position: absolute;
-    inset: -6px;
+    inset: -5px;
 }
 
 .dpad-btn svg {
-    width: 55%;
-    height: 55%;
+    width: 58%;
+    height: 58%;
     pointer-events: none;
+    transition: transform 0.08s ease;
 }
 
 .dpad-btn:hover {
@@ -1170,18 +1108,37 @@ html[dir="rtl"] input {
 
 .dpad-btn:active,
 .dpad-btn.pressed {
-    background: rgba(0, 240, 255, 0.25);
-    box-shadow: 0 0 16px var(--cyan-glow);
+    background: rgba(0, 240, 255, 0.28);
+    box-shadow: 0 0 16px var(--cyan-glow), inset 0 0 8px rgba(0, 240, 255, 0.35);
     transform: scale(0.92);
     border-color: var(--cyan);
 }
 
+.dpad-btn.pressed svg {
+    transform: scale(0.9);
+}
+
 .dpad-center {
-    width: clamp(50px, 14vmin, 72px);
-    height: clamp(50px, 14vmin, 72px);
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    width: clamp(42px, 11vmin, 56px);
+    height: clamp(42px, 11vmin, 56px);
+    border-radius: 4px;
+    background: radial-gradient(circle at center, rgba(0, 240, 255, 0.22) 0%, rgba(10, 14, 28, 0.9) 65%);
+    border: 1px solid rgba(0, 240, 255, 0.16);
+    box-shadow: inset 0 0 8px rgba(0, 240, 255, 0.12);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dpad-center::after {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    opacity: 0.45;
+    box-shadow: 0 0 6px var(--cyan-glow);
 }
 
 /* ── Footer Keyboard Hints ── */
@@ -1325,15 +1282,15 @@ body.touch-active .desktop-only {
         height: 44px;
     }
 
-    /* Adaptive D-Pad in portrait */
+    /* Adaptive Compact D-Pad in portrait */
     .dpad-btn {
-        width: clamp(56px, min(17vw, 7.8vh), 72px);
-        height: clamp(56px, min(17vw, 7.8vh), 72px);
+        width: clamp(44px, min(13.5vw, 6.2vh), 56px);
+        height: clamp(44px, min(13.5vw, 6.2vh), 56px);
     }
 
     .dpad-center {
-        width: clamp(56px, min(17vw, 7.8vh), 72px);
-        height: clamp(56px, min(17vw, 7.8vh), 72px);
+        width: clamp(44px, min(13.5vw, 6.2vh), 56px);
+        height: clamp(44px, min(13.5vw, 6.2vh), 56px);
     }
 
     .overlay-card {
@@ -1450,17 +1407,17 @@ body.touch-active:not(.non-portrait) {
         display: none;
     }
 
-    /* Side D-Pad scaled to available height */
+    /* Side D-Pad scaled compactly to available height */
     .dpad-btn {
-        width: clamp(42px, min(12.5vh, 9vw), 66px);
-        height: clamp(42px, min(12.5vh, 9vw), 66px);
-        border-radius: 8px;
+        width: clamp(34px, min(10.5vh, 7.2vw), 50px);
+        height: clamp(34px, min(10.5vh, 7.2vw), 50px);
+        border-radius: 6px;
     }
 
     .dpad-center {
-        width: clamp(42px, min(12.5vh, 9vw), 66px);
-        height: clamp(42px, min(12.5vh, 9vw), 66px);
-        border-radius: 8px;
+        width: clamp(34px, min(10.5vh, 7.2vw), 50px);
+        height: clamp(34px, min(10.5vh, 7.2vw), 50px);
+        border-radius: 4px;
     }
 
     .overlay-card {
@@ -1509,13 +1466,13 @@ body.touch-active:not(.non-portrait) {
     }
 
     .dpad-btn {
-        width: clamp(48px, 14vw, 58px);
-        height: clamp(48px, 14vw, 58px);
+        width: clamp(38px, 11.5vw, 46px);
+        height: clamp(38px, 11.5vw, 46px);
     }
 
     .dpad-center {
-        width: clamp(48px, 14vw, 58px);
-        height: clamp(48px, 14vw, 58px);
+        width: clamp(38px, 11.5vw, 46px);
+        height: clamp(38px, 11.5vw, 46px);
     }
 }
 
