@@ -318,6 +318,7 @@ body {
         inset 0 0 24px rgba(0, 0, 0, 0.32);
     flex-shrink: 0;
     touch-action: none; /* Prevents scroll hijacking on canvas touch */
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 #gameCanvas {
@@ -326,11 +327,60 @@ body {
     height: 100%;
     background: #080c18;
     background-image:
-        linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+        linear-gradient(rgba(0, 240, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.035) 1px, transparent 1px);
     background-size: var(--grid-css, 30px) var(--grid-css, 30px);
     image-rendering: -webkit-optimize-contrast;
     image-rendering: crisp-edges;
+    transition: background 0.3s ease;
+}
+
+/* ── Visual Theme 1: Easy (Matrix Cyber-Green) ── */
+.canvas-wrapper.theme-easy {
+    border-color: rgba(0, 255, 136, 0.35);
+    box-shadow:
+        0 0 0 1px rgba(0, 255, 136, 0.1),
+        0 0 35px rgba(0, 255, 136, 0.18),
+        inset 0 0 24px rgba(0, 0, 0, 0.35);
+}
+
+.canvas-wrapper.theme-easy #gameCanvas {
+    background: #05140d;
+    background-image:
+        linear-gradient(rgba(0, 255, 136, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 255, 136, 0.05) 1px, transparent 1px);
+}
+
+/* ── Visual Theme 2: Medium (Synthwave Cyan) ── */
+.canvas-wrapper.theme-medium {
+    border-color: rgba(0, 240, 255, 0.3);
+    box-shadow:
+        0 0 0 1px rgba(0, 240, 255, 0.08),
+        0 0 35px rgba(0, 240, 255, 0.15),
+        inset 0 0 24px rgba(0, 0, 0, 0.35);
+}
+
+.canvas-wrapper.theme-medium #gameCanvas {
+    background: #080c18;
+    background-image:
+        linear-gradient(rgba(0, 240, 255, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 240, 255, 0.035) 1px, transparent 1px);
+}
+
+/* ── Visual Theme 3: Hard (Crimson Overdrive) ── */
+.canvas-wrapper.theme-hard {
+    border-color: rgba(255, 45, 85, 0.4);
+    box-shadow:
+        0 0 0 1px rgba(255, 45, 85, 0.12),
+        0 0 35px rgba(255, 45, 85, 0.22),
+        inset 0 0 24px rgba(0, 0, 0, 0.35);
+}
+
+.canvas-wrapper.theme-hard #gameCanvas {
+    background: #120608;
+    background-image:
+        linear-gradient(rgba(255, 45, 85, 0.065) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 45, 85, 0.065) 1px, transparent 1px);
 }
 
 /* Flash Animations */
@@ -338,12 +388,12 @@ body {
 .canvas-wrapper.flash-die { animation: flash-die 0.45s ease; }
 
 @keyframes flash-eat {
-    0%, 100% { box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.08), 0 0 35px rgba(0, 255, 136, 0.13), inset 0 0 24px rgba(0, 0, 0, 0.32); }
+    0%, 100% { }
     50%      { box-shadow: 0 0 0 3px var(--green), 0 0 45px var(--green-glow); }
 }
 
 @keyframes flash-die {
-    0%, 100% { box-shadow: 0 0 0 1px rgba(0, 240, 255, 0.08), 0 0 35px rgba(0, 255, 136, 0.13), inset 0 0 24px rgba(0, 0, 0, 0.32); }
+    0%, 100% { }
     30%      { box-shadow: 0 0 0 4px var(--red), 0 0 65px var(--red-glow); }
 }
 
@@ -362,9 +412,29 @@ body {
     padding: 10px;
 }
 
-.overlay.hidden {
-    opacity: 0;
-    pointer-events: none;
+.overlay.hidden,
+.hidden,
+#difficulty-select-screen.hidden,
+#mode-select-screen.hidden,
+#main-menu-screen.hidden,
+#settings-screen.hidden,
+#pause-screen.hidden,
+#game-over-screen.hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    z-index: -9999 !important;
+}
+
+.overlay.hidden .overlay-card,
+.overlay.hidden .difficulty-card,
+.overlay.hidden .menu-card,
+.overlay.hidden .mode-select-card,
+.overlay.hidden .settings-card {
+    display: none !important;
+    visibility: hidden !important;
+    animation: none !important;
 }
 
 .overlay-card {
@@ -763,6 +833,145 @@ html[dir="rtl"] .mode-card {
 .mode-locked {
     color: var(--text-muted);
     font-weight: 700;
+}
+
+/* ── Difficulty Select Screen ── */
+.difficulty-card {
+    position: relative;
+    max-width: 380px;
+    max-height: 94%;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--cyan-dim) transparent;
+    gap: clamp(8px, 1.8vmin, 14px);
+    padding: clamp(12px, 2.5vmin, 22px) clamp(12px, 2.8vmin, 24px);
+}
+
+.difficulty-card .overlay-title {
+    padding: 0 clamp(20px, 4vmin, 32px);
+    width: 100%;
+}
+
+.difficulty-list {
+    display: flex;
+    flex-direction: column;
+    gap: clamp(8px, 1.6vmin, 12px);
+    width: 100%;
+}
+
+.diff-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: clamp(10px, 2vmin, 14px) clamp(12px, 2.4vmin, 18px);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-dim);
+    text-align: left;
+    transition: all var(--tf);
+    user-select: none;
+    -webkit-user-select: none;
+    width: 100%;
+    font-family: var(--font);
+    box-sizing: border-box;
+    cursor: pointer;
+    touch-action: manipulation;
+}
+
+html[dir="rtl"] .diff-card {
+    text-align: right;
+}
+
+.diff-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.diff-name {
+    font-size: clamp(0.88rem, 1.8vmin, 1.1rem);
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.diff-badge {
+    font-size: clamp(0.56rem, 1.1vmin, 0.68rem);
+    font-weight: 800;
+    letter-spacing: 1px;
+    padding: 2px 7px;
+    border-radius: 6px;
+    text-transform: uppercase;
+}
+
+.diff-desc {
+    font-size: clamp(0.68rem, 1.3vmin, 0.8rem);
+    color: var(--text-muted);
+    line-height: 1.35;
+    margin: 0;
+}
+
+/* Easy (Green) */
+.diff-card-easy {
+    border-color: rgba(0, 255, 136, 0.35);
+    background: rgba(0, 255, 136, 0.05);
+    box-shadow: 0 0 12px rgba(0, 255, 136, 0.08);
+}
+.diff-card-easy:hover {
+    background: var(--green-dim);
+    border-color: var(--green);
+    box-shadow: 0 0 22px var(--green-glow);
+    transform: translateY(-2px);
+}
+.diff-card-easy:active {
+    transform: scale(0.98);
+}
+.badge-easy {
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid var(--green);
+}
+
+/* Medium (Cyan) */
+.diff-card-medium {
+    border-color: rgba(0, 240, 255, 0.35);
+    background: rgba(0, 240, 255, 0.05);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.08);
+}
+.diff-card-medium:hover {
+    background: var(--cyan-dim);
+    border-color: var(--cyan);
+    box-shadow: 0 0 22px var(--cyan-glow);
+    transform: translateY(-2px);
+}
+.diff-card-medium:active {
+    transform: scale(0.98);
+}
+.badge-medium {
+    background: var(--cyan-dim);
+    color: var(--cyan);
+    border: 1px solid var(--cyan);
+}
+
+/* Hard (Red) */
+.diff-card-hard {
+    border-color: rgba(255, 45, 85, 0.35);
+    background: rgba(255, 45, 85, 0.05);
+    box-shadow: 0 0 12px rgba(255, 45, 85, 0.08);
+}
+.diff-card-hard:hover {
+    background: var(--red-dim);
+    border-color: var(--red);
+    box-shadow: 0 0 22px var(--red-glow);
+    transform: translateY(-2px);
+}
+.diff-card-hard:active {
+    transform: scale(0.98);
+}
+.badge-hard {
+    background: var(--red-dim);
+    color: var(--red);
+    border: 1px solid var(--red);
 }
 
 /* ── Settings Screen ── */

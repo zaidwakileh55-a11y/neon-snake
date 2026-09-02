@@ -117,6 +117,46 @@
                 </div>
             </div>
 
+            <!-- ── 2.5 DIFFICULTY SELECT SCREEN OVERLAY ── -->
+            <div id="difficulty-select-screen" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Select Difficulty">
+                <div class="overlay-card difficulty-card slide-in">
+                    <button id="difficulty-close-btn" class="modal-close-btn" title="Close" aria-label="Close Difficulty Select">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                    <h2 class="overlay-title glow-cyan" data-i18n="selectDifficulty">SELECT DIFFICULTY</h2>
+                    <p class="overlay-subtitle" data-i18n="difficultySubtitle">CHOOSE YOUR CHALLENGE</p>
+
+                    <div class="difficulty-list">
+                        <!-- Easy Button Card -->
+                        <button id="diff-easy-btn" class="diff-card diff-card-easy" data-difficulty="easy" aria-label="Easy Difficulty">
+                            <div class="diff-card-header">
+                                <span class="diff-name glow-green" data-i18n="diffEasy">EASY</span>
+                                <span class="diff-badge badge-easy" data-i18n="diffEasyBadge">RELAXED</span>
+                            </div>
+                            <p class="diff-desc" data-i18n="diffEasyDesc">Gentle speed & relaxed curve. Great for casual play.</p>
+                        </button>
+
+                        <!-- Medium Button Card -->
+                        <button id="diff-medium-btn" class="diff-card diff-card-medium" data-difficulty="medium" aria-label="Medium Difficulty">
+                            <div class="diff-card-header">
+                                <span class="diff-name glow-cyan" data-i18n="diffMedium">MEDIUM</span>
+                                <span class="diff-badge badge-medium" data-i18n="diffMediumBadge">BALANCED</span>
+                            </div>
+                            <p class="diff-desc" data-i18n="diffMediumDesc">Standard neon pace with progressive acceleration.</p>
+                        </button>
+
+                        <!-- Hard Button Card -->
+                        <button id="diff-hard-btn" class="diff-card diff-card-hard" data-difficulty="hard" aria-label="Hard Difficulty">
+                            <div class="diff-card-header">
+                                <span class="diff-name glow-red" data-i18n="diffHard">HARD</span>
+                                <span class="diff-badge badge-hard" data-i18n="diffHardBadge">INTENSE</span>
+                            </div>
+                            <p class="diff-desc" data-i18n="diffHardDesc">High initial velocity with steep, relentless acceleration.</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
             <!-- ── 2. SETTINGS SCREEN OVERLAY ── -->
             <div id="settings-screen" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Settings">
                 <div class="overlay-card settings-card slide-in">
@@ -238,6 +278,6 @@
 
     </div>
 
-    <script src="script.js"></script>
+    <script src="script.js?v=2.0.0"></script>
 </body>
 </html>

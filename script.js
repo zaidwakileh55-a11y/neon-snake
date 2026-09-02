@@ -1,8 +1,13 @@
+var gameOverReason = 'self';
+window.gameOverReason = 'self';
+
 /* ═══════════════════════════════════════════════════════════
    NEON SNAKE – Game Logic, Sound, Controls, Touch/Swipe, D-Pad
    Adaptive Input & Canvas Management Engine
    Localization (English / Arabic), Main Menu & Settings
    ═══════════════════════════════════════════════════════════ */
+
+// Global Game Over State
 
 // ── DOM References ──
 const canvas           = document.getElementById('gameCanvas');
@@ -14,19 +19,24 @@ const finalHSEl        = document.getElementById('final-high-score');
 const newHSBadge       = document.getElementById('new-high-score-badge');
 
 // Overlays
-const mainMenuScreen   = document.getElementById('main-menu-screen');
-const modeSelectScreen = document.getElementById('mode-select-screen');
-const settingsScreen   = document.getElementById('settings-screen');
-const pauseScreen      = document.getElementById('pause-screen');
-const gameOverScr      = document.getElementById('game-over-screen');
-const resetHsModal     = document.getElementById('reset-hs-modal');
+const mainMenuScreen         = document.getElementById('main-menu-screen');
+const modeSelectScreen       = document.getElementById('mode-select-screen');
+const difficultySelectScreen = document.getElementById('difficulty-select-screen');
+const settingsScreen         = document.getElementById('settings-screen');
+const pauseScreen            = document.getElementById('pause-screen');
+const gameOverScr            = document.getElementById('game-over-screen');
+const resetHsModal           = document.getElementById('reset-hs-modal');
 
 // Buttons
-const menuPlayBtn        = document.getElementById('menu-play-btn');
-const menuSettingsBtn    = document.getElementById('menu-settings-btn');
-const modeSelectCloseBtn = document.getElementById('mode-select-close-btn');
-const modeClassicBtn     = document.getElementById('mode-classic-btn');
-const settingsCloseBtn   = document.getElementById('settings-close-btn');
+const menuPlayBtn          = document.getElementById('menu-play-btn');
+const menuSettingsBtn      = document.getElementById('menu-settings-btn');
+const modeSelectCloseBtn   = document.getElementById('mode-select-close-btn');
+const modeClassicBtn       = document.getElementById('mode-classic-btn');
+const difficultyCloseBtn   = document.getElementById('difficulty-close-btn');
+const diffEasyBtn          = document.getElementById('diff-easy-btn');
+const diffMediumBtn        = document.getElementById('diff-medium-btn');
+const diffHardBtn          = document.getElementById('diff-hard-btn');
+const settingsCloseBtn     = document.getElementById('settings-close-btn');
 const restartBtn       = document.getElementById('restart-btn');
 const resumeBtn        = document.getElementById('resume-btn');
 const pauseMenuBtn     = document.getElementById('pause-menu-btn');
@@ -53,12 +63,62 @@ const burstEl          = document.getElementById('particle-burst');
 const wrapper          = document.querySelector('.canvas-wrapper');
 const dpadContainer    = document.getElementById('dpad-container');
 
-// ── Constants & Grid Calculation ──
-const TILES    = 20;
-const INIT_SPD = 100;
-const MIN_SPD  = 50;
-const SPD_STEP = 2;
+// ── Constants, Difficulty Settings & Visual Themes ──
+const DIFFICULTIES = {
+    easy: {
+        tiles: 16,      // Spacious, relaxed grid with larger cells
+        initSpeed: 120, // fluid, smooth relaxed glide (no stutter or teleportation)
+        minSpeed: 60,   // silky smooth progression
+        speedStep: 1.5  // gentle progressive ramp-up
+    },
+    medium: {
+        tiles: 20,      // Balanced standard grid
+        initSpeed: 90,  // balanced, snappy synthwave pace
+        minSpeed: 40,   // high-speed responsive max cap
+        speedStep: 1.8  // moderate progressive ramp-up
+    },
+    hard: {
+        tiles: 25,      // Tight, high-stakes grid with smaller cells
+        initSpeed: 65,  // intense, razor-fast laser pace
+        minSpeed: 28,   // extreme velocity, silky-smooth at 60/120fps
+        speedStep: 2.2  // steep acceleration curve
+    }
+};
 
+const THEMES = {
+    easy: {
+        snakeHeadGrad: ['#ffffff', '#00ff88'],
+        snakeHeadGlow: '#00ff88',
+        snakeBodyGrad: (alpha) => [`rgba(0, 255, 136, ${alpha})`, `rgba(0, 200, 110, ${alpha * 0.7})`],
+        snakeBodyGlow: '#00ff88',
+        foodGrad: ['#ffffff', '#a8ff00', '#00cc44'],
+        foodGlow: '#a8ff00',
+        particles: ['#00ff88', '#a8ff00', '#ffd700', '#38ef7d', '#ffffff']
+    },
+    medium: {
+        snakeHeadGrad: ['#ffffff', '#00e5ff'],
+        snakeHeadGlow: '#00f0ff',
+        snakeBodyGrad: (alpha) => [`rgba(0, 240, 255, ${alpha})`, `rgba(0, 160, 255, ${alpha * 0.7})`],
+        snakeBodyGlow: '#00f0ff',
+        foodGrad: ['#ff8fa0', '#ff2d55', '#cc0033'],
+        foodGlow: '#ff2d55',
+        particles: ['#00f0ff', '#00ff88', '#ff2d55', '#ffd700', '#ffffff']
+    },
+    hard: {
+        snakeHeadGrad: ['#ffffff', '#ff3b30'],
+        snakeHeadGlow: '#ff2d55',
+        snakeBodyGrad: (alpha) => [`rgba(255, 59, 48, ${alpha})`, `rgba(255, 149, 0, ${alpha * 0.7})`],
+        snakeBodyGlow: '#ff3b30',
+        foodGrad: ['#e0aaff', '#9d4edd', '#3a0ca3'],
+        foodGlow: '#c77dff',
+        particles: ['#ff3b30', '#ff9500', '#9d4edd', '#00d4ff', '#ffffff']
+    }
+};
+
+let currentDifficulty = localStorage.getItem('snakeLastDifficulty') || 'medium';
+if (!DIFFICULTIES[currentDifficulty]) currentDifficulty = 'medium';
+
+let TILES = DIFFICULTIES[currentDifficulty].tiles;
 let GRID = 30; // Dynamically computed CSS pixels per tile
 
 /* ══════════════════════════════════════════════════════════
@@ -77,6 +137,18 @@ const i18n = {
         modeComingSoon: '🔒 COMING SOON',
         modeComingSoonDesc: 'More game modes under development.',
         modeReady: 'PLAY',
+        selectDifficulty: 'SELECT DIFFICULTY',
+        difficultySubtitle: 'CHOOSE YOUR CHALLENGE',
+        diffEasy: 'EASY',
+        diffEasyBadge: 'RELAXED',
+        diffEasyDesc: 'Gentle speed & relaxed curve. Great for casual play.',
+        diffMedium: 'MEDIUM',
+        diffMediumBadge: 'BALANCED',
+        diffMediumDesc: 'Standard neon pace with progressive acceleration.',
+        diffHard: 'HARD',
+        diffHardBadge: 'INTENSE',
+        diffHardDesc: 'High initial velocity with steep, relentless acceleration.',
+        difficulty: 'DIFFICULTY',
         settingsTitle: 'SETTINGS',
         sfx: 'SOUND EFFECTS',
         controls: 'CONTROLS',
@@ -111,6 +183,18 @@ const i18n = {
         modeComingSoon: '🔒 قريبًا',
         modeComingSoonDesc: 'المزيد من أنماط اللعب قيد التطوير.',
         modeReady: 'لعب',
+        selectDifficulty: 'اختر مستوى الصعوبة',
+        difficultySubtitle: 'اختر مستوى التحدي',
+        diffEasy: 'سهل',
+        diffEasyBadge: 'هادئ',
+        diffEasyDesc: 'سرعة هادئة وتدرج سلس. مناسب للعب المريح.',
+        diffMedium: 'متوسط',
+        diffMediumBadge: 'متوازن',
+        diffMediumDesc: 'السرعة القياسية مع تسارع تدريجي ممتع.',
+        diffHard: 'صعب',
+        diffHardBadge: 'مكثف',
+        diffHardDesc: 'سرعة أولية عالية مع تسارع حاد ومثير.',
+        difficulty: 'مستوى الصعوبة',
         settingsTitle: 'الإعدادات',
         sfx: 'المؤثرات الصوتية',
         controls: 'أزرار التحكم',
@@ -228,14 +312,26 @@ function initInputAdaptation() {
 initInputAdaptation();
 
 /* ══════════════════════════════════════════════════════════
-   GAME STATE
+   GAME STATE (Continuous Interpolation & Responsive Input Queue)
    ══════════════════════════════════════════════════════════ */
-let snake, food, dx, dy, ndx, ndy;
-let score, highScore;
-let gameSpeed, gameLoopInterval;
-let isGameOver, isPaused, gameStarted;
+const initCenter = Math.floor((TILES || 20) / 2);
+let snake = [
+    { x: initCenter, y: initCenter },
+    { x: (initCenter - 1 + (TILES || 20)) % (TILES || 20), y: initCenter },
+    { x: (initCenter - 2 + (TILES || 20)) % (TILES || 20), y: initCenter }
+];
+let prevSnake = snake.map(s => ({ x: s.x, y: s.y }));
+let food = { x: (initCenter + 4) % (TILES || 20), y: initCenter };
+let dx = 1, dy = 0, ndx = 1, ndy = 0;
+let inputQueue = [];
+let score = 0, highScore = 0;
+let gameSpeed = 100;
+let isGameOver = false, isPaused = false, gameStarted = false;
+window.gameOverReason = '';
 let foodPulse = 0;
 let isNewHS   = false;
+let lastTickTime = 0;
+let moveAccumulator = 0;
 
 /* ══════════════════════════════════════════════════════════
    SOUND SYSTEM
@@ -273,12 +369,86 @@ function playTone(freq, type, duration, gainVal, delay = 0) {
     } catch (_) {}
 }
 
+function playFrequencySweep(startFreq, endFreq, type, duration, gainVal, delay = 0) {
+    if (!soundEnabled || !sfxEnabled) return;
+    try {
+        const ac = getAudioCtx();
+        if (!ac) return;
+        const osc = ac.createOscillator();
+        const g   = ac.createGain();
+        osc.connect(g);
+        g.connect(ac.destination);
+        osc.type = type;
+        osc.frequency.setValueAtTime(startFreq, ac.currentTime + delay);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(10, endFreq), ac.currentTime + delay + duration);
+        g.gain.setValueAtTime(gainVal, ac.currentTime + delay);
+        g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + delay + duration);
+        osc.start(ac.currentTime + delay);
+        osc.stop(ac.currentTime + delay + duration);
+    } catch (_) {}
+}
+
 const sounds = {
-    eat()       { playTone(600, 'sine', 0.06, 0.18); playTone(900, 'sine', 0.06, 0.10, 0.04); },
-    die()       { playTone(220, 'sawtooth', 0.20, 0.22); playTone(150, 'sawtooth', 0.25, 0.18, 0.18); playTone(100, 'sawtooth', 0.30, 0.12, 0.38); },
-    start()     { [440, 554, 659, 880].forEach((f, i) => playTone(f, 'sine', 0.12, 0.15, i * 0.08)); },
-    click()     { playTone(1000, 'sine', 0.04, 0.12); },
-    highScore() { [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'sine', 0.15, 0.13, i * 0.09)); }
+    eat() {
+        if (currentDifficulty === 'easy') {
+            // Soft, calm sine blips with gentle attack
+            playTone(520, 'sine', 0.09, 0.16);
+            playTone(780, 'sine', 0.11, 0.10, 0.04);
+        } else if (currentDifficulty === 'hard') {
+            // Fast sharp laser zap & sizzle
+            playFrequencySweep(1400, 600, 'sawtooth', 0.06, 0.20);
+            playTone(900, 'sawtooth', 0.04, 0.12, 0.03);
+        } else {
+            // Medium: Punchy synthwave chiptune
+            playTone(600, 'triangle', 0.06, 0.22);
+            playTone(920, 'square', 0.07, 0.08, 0.03);
+        }
+    },
+    die() {
+        if (currentDifficulty === 'easy') {
+            // Gentle low rumble / warm sine decrescendo
+            playTone(260, 'sine', 0.28, 0.20);
+            playTone(180, 'sine', 0.32, 0.15, 0.15);
+            playTone(120, 'sine', 0.40, 0.10, 0.30);
+        } else if (currentDifficulty === 'hard') {
+            // Aggressive distorted crunch drop
+            playFrequencySweep(320, 45, 'sawtooth', 0.25, 0.30);
+            playFrequencySweep(200, 30, 'sawtooth', 0.35, 0.25, 0.10);
+            playTone(60, 'sawtooth', 0.45, 0.20, 0.20);
+        } else {
+            // Medium: Classic synthwave chiptune fall
+            playTone(220, 'sawtooth', 0.20, 0.22);
+            playTone(150, 'triangle', 0.25, 0.18, 0.18);
+            playTone(100, 'sawtooth', 0.30, 0.12, 0.38);
+        }
+    },
+    start() {
+        if (currentDifficulty === 'easy') {
+            [392, 494, 587, 784].forEach((f, i) => playTone(f, 'sine', 0.14, 0.12, i * 0.08));
+        } else if (currentDifficulty === 'hard') {
+            [440, 660, 880, 1320].forEach((f, i) => playTone(f, 'sawtooth', 0.08, 0.14, i * 0.06));
+        } else {
+            [440, 554, 659, 880].forEach((f, i) => playTone(f, 'triangle', 0.12, 0.16, i * 0.08));
+        }
+    },
+    click() {
+        if (currentDifficulty === 'hard') {
+            playTone(1400, 'sawtooth', 0.03, 0.10);
+        } else if (currentDifficulty === 'easy') {
+            playTone(880, 'sine', 0.04, 0.10);
+        } else {
+            playTone(1000, 'sine', 0.04, 0.12);
+        }
+    },
+    highScore() {
+        if (currentDifficulty === 'easy') {
+            [440, 554, 659, 880, 1108].forEach((f, i) => playTone(f, 'sine', 0.18, 0.12, i * 0.09));
+        } else if (currentDifficulty === 'hard') {
+            [523, 659, 784, 1046, 1318].forEach((f, i) => playTone(f, 'sawtooth', 0.12, 0.15, i * 0.07));
+        } else {
+            [523, 659, 784, 1047].forEach((f, i) => playTone(f, 'triangle', 0.15, 0.14, i * 0.09));
+        }
+    }
 };
 
 function applySoundUI() {
@@ -326,25 +496,72 @@ if (settingSfxBtn) {
 if (settingResetHsBtn) {
     settingResetHsBtn.addEventListener('click', () => {
         sounds.click();
-        resetHsModal.classList.remove('hidden');
+        if (resetHsModal) {
+            resetHsModal.classList.remove('hidden');
+            resetHsModal.style.setProperty('display', 'flex', 'important');
+        }
     });
 }
 
 if (resetConfirmNo) {
     resetConfirmNo.addEventListener('click', () => {
         sounds.click();
-        resetHsModal.classList.add('hidden');
+        if (resetHsModal) {
+            resetHsModal.classList.add('hidden');
+            resetHsModal.style.setProperty('display', 'none', 'important');
+        }
     });
+}
+
+// High Score Persistence Helpers per Difficulty
+function getHighScore(diff = currentDifficulty) {
+    const key = `neonSnake_high_${diff}`;
+    const stored = localStorage.getItem(key);
+    if (stored !== null) {
+        return parseInt(stored, 10) || 0;
+    }
+    // Fallback for existing legacy high score when difficulty is medium
+    if (diff === 'medium') {
+        const legacy = localStorage.getItem('snakeHighScore');
+        if (legacy !== null) {
+            const val = parseInt(legacy, 10) || 0;
+            localStorage.setItem(key, val.toString());
+            return val;
+        }
+    }
+    return 0;
+}
+
+function saveHighScore(score, diff = currentDifficulty) {
+    const key = `neonSnake_high_${diff}`;
+    localStorage.setItem(key, score.toString());
+    if (diff === 'medium') {
+        localStorage.setItem('snakeHighScore', score.toString());
+    }
+}
+
+function updateHighScoreDisplay() {
+    highScore = getHighScore(currentDifficulty);
+    highScoreEl.textContent = highScore;
+    if (finalHSEl) finalHSEl.textContent = highScore;
 }
 
 if (resetConfirmYes) {
     resetConfirmYes.addEventListener('click', () => {
         sounds.click();
+        ['easy', 'medium', 'hard'].forEach(d => {
+            localStorage.removeItem(`neonSnake_high_${d}`);
+            saveHighScore(0, d);
+        });
+        localStorage.removeItem('snakeHighScore');
         highScore = 0;
-        localStorage.setItem('snakeHighScore', '0');
-        highScoreEl.textContent = 0;
-        finalHSEl.textContent    = 0;
-        resetHsModal.classList.add('hidden');
+        highScoreEl.textContent = '0';
+        if (finalHSEl) finalHSEl.textContent = '0';
+        updateHighScoreDisplay();
+        if (resetHsModal) {
+            resetHsModal.classList.add('hidden');
+            resetHsModal.style.setProperty('display', 'none', 'important');
+        }
     });
 }
 
@@ -361,26 +578,48 @@ function applyPauseUI(paused) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   NAVIGATION & SCREEN MANAGEMENT
+   NAVIGATION & SCREEN MANAGEMENT (Centralized Overlay Manager)
    ══════════════════════════════════════════════════════════ */
+const allOverlays = [
+    mainMenuScreen,
+    modeSelectScreen,
+    difficultySelectScreen,
+    settingsScreen,
+    pauseScreen,
+    gameOverScr
+];
+
+function hideAllOverlays() {
+    allOverlays.forEach(overlay => {
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.setAttribute('aria-hidden', 'true');
+            overlay.style.setProperty('display', 'none', 'important');
+        }
+    });
+    if (resetHsModal) {
+        resetHsModal.classList.add('hidden');
+        resetHsModal.style.setProperty('display', 'none', 'important');
+    }
+}
+
+function showScreen(screenEl) {
+    hideAllOverlays();
+    if (screenEl) {
+        screenEl.classList.remove('hidden');
+        screenEl.setAttribute('aria-hidden', 'false');
+        screenEl.style.removeProperty('display');
+    }
+}
+
 function showMainMenu() {
-    if (gameLoopInterval) clearInterval(gameLoopInterval);
-    
+
     isPaused    = false;
     isGameOver  = false;
     gameStarted = false;
     
     applyPauseUI(false);
-    
-    // Hide in-game overlays
-    pauseScreen.classList.add('hidden');
-    gameOverScr.classList.add('hidden');
-    settingsScreen.classList.add('hidden');
-    if (modeSelectScreen) modeSelectScreen.classList.add('hidden');
-    if (resetHsModal) resetHsModal.classList.add('hidden');
-    
-    // Show Main Menu
-    mainMenuScreen.classList.remove('hidden');
+    showScreen(mainMenuScreen);
     
     initState();
     placeFood();
@@ -389,23 +628,58 @@ function showMainMenu() {
 
 function showModeSelect() {
     sounds.click();
-    if (modeSelectScreen) modeSelectScreen.classList.remove('hidden');
+    showScreen(modeSelectScreen);
 }
 
 function hideModeSelect() {
     sounds.click();
-    if (modeSelectScreen) modeSelectScreen.classList.add('hidden');
+    showScreen(mainMenuScreen);
+}
+
+function showDifficultySelect() {
+    sounds.click();
+    showScreen(difficultySelectScreen);
+}
+
+function hideDifficultySelect() {
+    sounds.click();
+    showScreen(modeSelectScreen);
 }
 
 function showSettings() {
     sounds.click();
     updateSettingTogglesUI();
-    settingsScreen.classList.remove('hidden');
+    showScreen(settingsScreen);
 }
 
 function hideSettings() {
     sounds.click();
-    settingsScreen.classList.add('hidden');
+    showScreen(mainMenuScreen);
+}
+
+function applyTheme() {
+    if (!wrapper) return;
+    wrapper.classList.remove('theme-easy', 'theme-medium', 'theme-hard');
+    wrapper.classList.add(`theme-${currentDifficulty}`);
+}
+
+function setDifficulty(diff) {
+    if (!DIFFICULTIES[diff]) diff = 'medium';
+    currentDifficulty = diff;
+    TILES = DIFFICULTIES[diff].tiles;
+    localStorage.setItem('snakeLastDifficulty', diff);
+    applyTheme();
+    updateHighScoreDisplay();
+    resizeCanvas();
+}
+
+function selectDifficultyAndStart(diff) {
+    if (!DIFFICULTIES[diff]) diff = 'medium';
+    currentDifficulty = diff;
+    localStorage.setItem('snakeLastDifficulty', diff);
+    sounds.click();
+    hideAllOverlays();
+    startGame();
 }
 
 menuPlayBtn.addEventListener('click', showModeSelect);
@@ -413,10 +687,24 @@ if (modeSelectCloseBtn) modeSelectCloseBtn.addEventListener('click', hideModeSel
 if (modeClassicBtn) {
     modeClassicBtn.addEventListener('click', () => {
         sounds.click();
-        if (modeSelectScreen) modeSelectScreen.classList.add('hidden');
-        startGame();
+        showDifficultySelect();
     });
 }
+
+if (difficultyCloseBtn) difficultyCloseBtn.addEventListener('click', hideDifficultySelect);
+
+[
+    { btn: diffEasyBtn, diff: 'easy' },
+    { btn: diffMediumBtn, diff: 'medium' },
+    { btn: diffHardBtn, diff: 'hard' }
+].forEach(({ btn, diff }) => {
+    if (!btn) return;
+    btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        selectDifficultyAndStart(diff);
+    });
+});
 
 menuSettingsBtn.addEventListener('click', showSettings);
 if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', hideSettings);
@@ -427,27 +715,41 @@ gameoverMenuBtn.addEventListener('click', () => { sounds.click(); showMainMenu()
    INIT / RESET
    ══════════════════════════════════════════════════════════ */
 function initState() {
-    snake       = [{ x: 10, y: 10 }];
-    dx = 0; dy = 0; ndx = 0; ndy = 0;
+    const diffConfig = DIFFICULTIES[currentDifficulty] || DIFFICULTIES.medium;
+    TILES = diffConfig.tiles;
+    const startPos = Math.floor(TILES / 2);
+    snake = [
+        { x: startPos, y: startPos },
+        { x: (startPos - 1 + TILES) % TILES, y: startPos },
+        { x: (startPos - 2 + TILES) % TILES, y: startPos }
+    ];
+    prevSnake   = snake.map(s => ({ x: s.x, y: s.y }));
+    inputQueue  = [];
+    dx = 1; dy = 0; ndx = 1; ndy = 0;
     score       = 0;
-    gameSpeed   = INIT_SPD;
+    gameSpeed   = diffConfig.initSpeed;
     isGameOver  = false;
     isPaused    = false;
-    gameStarted = false;
+    window.gameOverReason = '';
     isNewHS     = false;
+    moveAccumulator = 0;
     scoreEl.textContent = 0;
+    updateHighScoreDisplay();
+    applyTheme();
     applyPauseUI(false);
+    placeFood();
+    resizeCanvas();
 }
 
-highScore = parseInt(localStorage.getItem('snakeHighScore') || '0', 10);
-highScoreEl.textContent = highScore;
+updateHighScoreDisplay();
+applyTheme();
 
 setLanguage(currentLang);
 applySoundUI();
 initState();
 placeFood();
 resizeCanvas();
-requestAnimationFrame(() => { resizeCanvas(); drawFrame(); });
+requestAnimationFrame(() => { resizeCanvas(); drawFrame(1); });
 
 /* ══════════════════════════════════════════════════════════
    START / RESTART / PAUSE
@@ -455,116 +757,174 @@ requestAnimationFrame(() => { resizeCanvas(); drawFrame(); });
 function startGame() {
     getAudioCtx();
     sounds.start();
+    hideAllOverlays();
     initState();
     placeFood();
-    mainMenuScreen.classList.add('hidden');
-    if (modeSelectScreen) modeSelectScreen.classList.add('hidden');
-    settingsScreen.classList.add('hidden');
-    gameOverScr.classList.add('hidden');
-    pauseScreen.classList.add('hidden');
-    if (gameLoopInterval) clearInterval(gameLoopInterval);
-    gameLoopInterval = setInterval(gameLoop, gameSpeed);
+    lastTickTime = performance.now();
+    moveAccumulator = 0;
+    inputQueue = [];
     gameStarted = true;
+    isPaused = false;
+    isGameOver = false;
+    drawFrame(1);
 }
 
 function togglePause() {
     if (!gameStarted || isGameOver) return;
     if (isPaused) {
         isPaused = false;
-        pauseScreen.classList.add('hidden');
+        hideAllOverlays();
         applyPauseUI(false);
-        if (gameLoopInterval) clearInterval(gameLoopInterval);
-        gameLoopInterval = setInterval(gameLoop, gameSpeed);
+        lastTickTime = performance.now();
+        moveAccumulator = 0;
     } else {
         isPaused = true;
-        pauseScreen.classList.remove('hidden');
+        showScreen(pauseScreen);
         applyPauseUI(true);
-        clearInterval(gameLoopInterval);
     }
 }
 
 /* ══════════════════════════════════════════════════════════
-   GAME LOOP
+   GAME TICK LOGIC
    ══════════════════════════════════════════════════════════ */
-function gameLoop() {
+function gameTick() {
     if (isPaused || isGameOver) return;
-    dx = ndx; dy = ndy;
+
+    if (inputQueue.length > 0) {
+        const nextDir = inputQueue.shift();
+        ndx = nextDir.x;
+        ndy = nextDir.y;
+    }
+    dx = ndx;
+    dy = ndy;
+
+    prevSnake = snake.map(s => ({ x: s.x, y: s.y }));
     moveSnake();
-    if (checkCollision()) { triggerGameOver(); return; }
-    drawFrame();
+    if (checkCollision()) {
+        triggerGameOver('self');
+        return;
+    }
 }
 
-/* ── Continuous Animation for Idle & Paused Pulse ── */
+/* ── Continuous 60+ FPS Interpolation Loop ── */
 function animLoop(ts) {
+    if (!lastTickTime) lastTickTime = ts;
+    const dt = Math.min(ts - lastTickTime, 100);
+    lastTickTime = ts;
     foodPulse = ts;
-    if (!gameStarted || isPaused) {
-        const sz = TILES * GRID;
-        ctx.clearRect(0, 0, sz, sz);
-        drawFood();
-        if (isPaused) drawSnake();
+
+    if (gameStarted && !isGameOver && !isPaused) {
+        moveAccumulator += dt;
+        while (moveAccumulator >= gameSpeed) {
+            moveAccumulator -= gameSpeed;
+            gameTick();
+            if (isGameOver) break;
+        }
+
+        const progress = isGameOver ? 1 : Math.min(moveAccumulator / gameSpeed, 1);
+        drawFrame(progress);
+    } else {
+        moveAccumulator = 0;
+        drawFrame(1);
     }
+
     requestAnimationFrame(animLoop);
 }
 requestAnimationFrame(animLoop);
 
 /* ══════════════════════════════════════════════════════════
-   DRAWING ROUTINES
+   DRAWING ROUTINES (Sub-tick Interpolated & Defensive)
    ══════════════════════════════════════════════════════════ */
-function drawFrame() {
+function drawFrame(progress = 1) {
     const sz = TILES * GRID;
     ctx.clearRect(0, 0, sz, sz);
     drawFood();
-    drawSnake();
+    drawSnake(progress);
 }
 
-function drawSnake() {
-    snake.forEach((seg, i) => {
-        const x      = seg.x * GRID;
-        const y      = seg.y * GRID;
+function drawSnake(progress = 1) {
+    if (!Array.isArray(snake) || snake.length === 0) return;
+    const theme = THEMES[currentDifficulty] || THEMES.medium;
+    const sz    = TILES * GRID;
+
+    // Render from tail to head
+    for (let i = snake.length - 1; i >= 0; i--) {
+        const curr = snake[i];
+        if (!curr || typeof curr.x !== 'number' || typeof curr.y !== 'number') continue;
+        const prev = (prevSnake && prevSnake[i]) ? prevSnake[i] : curr;
+
+        // Modular shortest-distance interpolation for wrap-around
+        let diffX = curr.x - prev.x;
+        if (diffX > TILES / 2) diffX -= TILES;
+        else if (diffX < -TILES / 2) diffX += TILES;
+        let interpX = prev.x + diffX * progress;
+        interpX = (interpX + TILES) % TILES;
+
+        let diffY = curr.y - prev.y;
+        if (diffY > TILES / 2) diffY -= TILES;
+        else if (diffY < -TILES / 2) diffY += TILES;
+        let interpY = prev.y + diffY * progress;
+        interpY = (interpY + TILES) % TILES;
+
         const isHead = i === 0;
         const pad    = isHead ? 0 : Math.max(1, GRID * 0.08);
         const r      = isHead ? GRID * 0.22 : GRID * 0.18;
         const t      = Math.min(i / (snake.length + 1), 1);
         const alpha  = 1 - t * 0.4;
 
-        ctx.shadowBlur  = isHead ? GRID * 0.6 : GRID * 0.28;
-        ctx.shadowColor = isHead ? '#00f0ff' : '#00ff88';
+        const drawSegmentAt = (px, py) => {
+            ctx.shadowBlur  = isHead ? GRID * 0.6 : GRID * 0.28;
+            ctx.shadowColor = isHead ? theme.snakeHeadGlow : theme.snakeBodyGlow;
 
-        ctx.beginPath();
-        roundRect(ctx, x + pad, y + pad, GRID - pad * 2, GRID - pad * 2, r);
-        const grad = ctx.createLinearGradient(x, y, x + GRID, y + GRID);
-        if (isHead) {
-            grad.addColorStop(0, '#ffffff');
-            grad.addColorStop(1, '#00e5ff');
-        } else {
-            grad.addColorStop(0, `rgba(0, 255, 136, ${alpha})`);
-            grad.addColorStop(1, `rgba(0, 200, 100, ${alpha * 0.7})`);
-        }
-        ctx.fillStyle = grad;
-        ctx.fill();
+            ctx.beginPath();
+            roundRect(ctx, px + pad, py + pad, GRID - pad * 2, GRID - pad * 2, r);
+            const grad = ctx.createLinearGradient(px, py, px + GRID, py + GRID);
+            if (isHead) {
+                grad.addColorStop(0, theme.snakeHeadGrad[0]);
+                grad.addColorStop(1, theme.snakeHeadGrad[1]);
+            } else {
+                const bodyColors = theme.snakeBodyGrad(alpha);
+                grad.addColorStop(0, bodyColors[0]);
+                grad.addColorStop(1, bodyColors[1]);
+            }
+            ctx.fillStyle = grad;
+            ctx.fill();
 
-        if (isHead) {
+            if (isHead) {
+                ctx.shadowBlur = 0;
+                ctx.fillStyle  = (currentDifficulty === 'hard') ? '#1a0408' : (currentDifficulty === 'easy' ? '#03120a' : '#080c18');
+                const ew = Math.max(1.5, GRID * 0.12);
+                const ea = GRID * 0.22;
+                const eb = GRID * 0.62;
+                const em = GRID * 0.40;
+                let ex1, ey1, ex2, ey2;
+                const fd = (inputQueue.length > 0) ? inputQueue[0] : ((ndx !== 0 || ndy !== 0) ? { x: ndx, y: ndy } : { x: dx || 1, y: dy || 0 });
+                if      (fd.y === -1) { ex1 = px + ea; ey1 = py + ea; ex2 = px + eb; ey2 = py + ea; }
+                else if (fd.y ===  1) { ex1 = px + ea; ey1 = py + eb; ex2 = px + eb; ey2 = py + eb; }
+                else if (fd.x === -1) { ex1 = px + ea; ey1 = py + ea; ex2 = px + ea; ey2 = py + eb; }
+                else if (fd.x ===  1) { ex1 = px + eb; ey1 = py + ea; ex2 = px + eb; ey2 = py + eb; }
+                else                  { ex1 = px + ea; ey1 = py + em; ex2 = px + eb; ey2 = py + em; }
+                ctx.beginPath(); ctx.arc(ex1, ey1, ew, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(ex2, ey2, ew, 0, Math.PI * 2); ctx.fill();
+            }
             ctx.shadowBlur = 0;
-            ctx.fillStyle  = '#080c18';
-            const ew = Math.max(1.5, GRID * 0.12);
-            const ea = GRID * 0.22;
-            const eb = GRID * 0.62;
-            const em = GRID * 0.40;
-            let ex1, ey1, ex2, ey2;
-            const fd = (ndx !== 0 || ndy !== 0) ? { x: ndx, y: ndy } : { x: dx, y: dy };
-            if      (fd.y === -1) { ex1 = x + ea; ey1 = y + ea; ex2 = x + eb; ey2 = y + ea; }
-            else if (fd.y ===  1) { ex1 = x + ea; ey1 = y + eb; ex2 = x + eb; ey2 = y + eb; }
-            else if (fd.x === -1) { ex1 = x + ea; ey1 = y + ea; ex2 = x + ea; ey2 = y + eb; }
-            else if (fd.x ===  1) { ex1 = x + eb; ey1 = y + ea; ex2 = x + eb; ey2 = y + eb; }
-            else                  { ex1 = x + ea; ey1 = y + em; ex2 = x + eb; ey2 = y + em; }
-            ctx.beginPath(); ctx.arc(ex1, ey1, ew, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(ex2, ey2, ew, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.shadowBlur = 0;
-    });
+        };
+
+        const baseX = interpX * GRID;
+        const baseY = interpY * GRID;
+        drawSegmentAt(baseX, baseY);
+
+        // Seamless wrap ghost rendering
+        if (baseX + GRID > sz) drawSegmentAt(baseX - sz, baseY);
+        if (baseX < 0)         drawSegmentAt(baseX + sz, baseY);
+        if (baseY + GRID > sz) drawSegmentAt(baseX, baseY - sz);
+        if (baseY < 0)         drawSegmentAt(baseX, baseY + sz);
+    }
 }
 
 function drawFood() {
+    if (!food || typeof food.x !== 'number' || typeof food.y !== 'number') return;
+    const theme = THEMES[currentDifficulty] || THEMES.medium;
     const cx    = food.x * GRID + GRID / 2;
     const cy    = food.y * GRID + GRID / 2;
     const pAmp  = GRID * 0.06;
@@ -572,19 +932,19 @@ function drawFood() {
     const r     = Math.max(2, GRID / 2 - GRID * 0.12 + pulse);
 
     ctx.shadowBlur  = GRID * 0.65 + pulse * 2;
-    ctx.shadowColor = '#ff2d55';
+    ctx.shadowColor = theme.foodGlow;
 
     const grad = ctx.createRadialGradient(cx - GRID * 0.08, cy - GRID * 0.08, 1, cx, cy, r);
-    grad.addColorStop(0, '#ff8fa0');
-    grad.addColorStop(0.5, '#ff2d55');
-    grad.addColorStop(1, '#cc0033');
+    grad.addColorStop(0, theme.foodGrad[0]);
+    grad.addColorStop(0.5, theme.foodGrad[1]);
+    grad.addColorStop(1, theme.foodGrad[2]);
     ctx.beginPath();
     ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fillStyle = grad;
     ctx.fill();
 
     ctx.shadowBlur = 0;
-    ctx.fillStyle  = 'rgba(255, 255, 255, 0.55)';
+    ctx.fillStyle  = 'rgba(255, 255, 255, 0.65)';
     ctx.beginPath();
     ctx.arc(cx - r * 0.3, cy - r * 0.3, r * 0.22, 0, Math.PI * 2);
     ctx.fill();
@@ -608,6 +968,7 @@ function roundRect(c, x, y, w, h, r) {
    SNAKE MOVEMENT & COLLISIONS (Classic Screen Wrap)
    ══════════════════════════════════════════════════════════ */
 function moveSnake() {
+    if (!Array.isArray(snake) || snake.length === 0 || !snake[0]) return;
     if (dx === 0 && dy === 0) return;
     const head = { 
         x: (snake[0].x + dx + TILES) % TILES, 
@@ -615,16 +976,19 @@ function moveSnake() {
     };
     snake.unshift(head);
 
-    if (head.x === food.x && head.y === food.y) {
+    const diffConfig = DIFFICULTIES[currentDifficulty] || DIFFICULTIES.medium;
+
+    if (food && typeof food.x === 'number' && typeof food.y === 'number' && head.x === food.x && head.y === food.y) {
         score += 10;
         scoreEl.textContent = score;
         animateScorePop();
 
-        if (score > highScore) {
+        const currentBest = getHighScore(currentDifficulty);
+        if (score > currentBest) {
             isNewHS   = true;
             highScore = score;
             highScoreEl.textContent = highScore;
-            localStorage.setItem('snakeHighScore', highScore);
+            saveHighScore(highScore, currentDifficulty);
             sounds.highScore();
         } else {
             sounds.eat();
@@ -634,10 +998,8 @@ function moveSnake() {
         flashWrapper('flash-eat');
         placeFood();
 
-        if (gameSpeed > MIN_SPD) {
-            clearInterval(gameLoopInterval);
-            gameSpeed -= SPD_STEP;
-            gameLoopInterval = setInterval(gameLoop, gameSpeed);
+        if (gameSpeed > diffConfig.minSpeed) {
+            gameSpeed = Math.max(diffConfig.minSpeed, gameSpeed - diffConfig.speedStep);
         }
     } else {
         snake.pop();
@@ -645,27 +1007,40 @@ function moveSnake() {
 }
 
 function placeFood() {
+    if (!Array.isArray(snake) || snake.length === 0) {
+        const center = Math.floor(TILES / 2);
+        food = { x: (center + 3) % TILES, y: center };
+        return;
+    }
     food = { x: Math.floor(Math.random() * TILES), y: Math.floor(Math.random() * TILES) };
-    if (snake.some(s => s.x === food.x && s.y === food.y)) placeFood();
+    if (snake.some(s => s && s.x === food.x && s.y === food.y)) placeFood();
 }
 
 function checkCollision() {
+    if (!Array.isArray(snake) || snake.length < 2 || !snake[0]) return false;
     const h = snake[0];
     for (let i = 1; i < snake.length; i++) {
-        if (h.x === snake[i].x && h.y === snake[i].y) return true;
+        if (snake[i] && h.x === snake[i].x && h.y === snake[i].y) return true;
     }
     return false;
 }
 
-function triggerGameOver() {
+function triggerGameOver(reasonArg = 'self') {
+    const reason = window.gameOverReason || 'self';
     isGameOver = true;
-    clearInterval(gameLoopInterval);
+    const resolvedReason = (typeof reasonArg === 'string' && reasonArg) ? reasonArg : reason;
+    if (typeof window !== 'undefined') {
+        window.gameOverReason = resolvedReason;
+    }
     sounds.die();
     flashWrapper('flash-die');
     finalScoreEl.textContent = score;
-    finalHSEl.textContent    = highScore;
+    finalHSEl.textContent    = getHighScore(currentDifficulty);
     newHSBadge.classList.toggle('hidden', !isNewHS);
-    setTimeout(() => gameOverScr.classList.remove('hidden'), 450);
+    setTimeout(() => showScreen(gameOverScr), 450);
+}
+if (typeof window !== 'undefined') {
+    window.triggerGameOver = triggerGameOver;
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -686,8 +1061,9 @@ function flashWrapper(cls) {
 }
 
 function spawnBurst(cx, cy) {
+    const theme = THEMES[currentDifficulty] || THEMES.medium;
     const dist0  = GRID * 1.4;
-    const colors = ['#00f0ff', '#00ff88', '#ff2d55', '#ffd700', '#ffffff'];
+    const colors = theme.particles;
     for (let i = 0; i < 12; i++) {
         const dot = document.createElement('div');
         dot.className = 'burst-dot';
@@ -705,19 +1081,29 @@ function spawnBurst(cx, cy) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   UNIFIED DIRECTION CONTROL (Keyboard, Swipe, D-Pad)
+   UNIFIED DIRECTION CONTROL (Keyboard, Swipe, D-Pad with Input Queue)
    ══════════════════════════════════════════════════════════ */
 function handleDir(dir) {
     if (!gameStarted || isGameOver || isPaused) return;
-    const goingUp    = dy === -1;
-    const goingDown  = dy ===  1;
-    const goingRight = dx ===  1;
-    const goingLeft  = dx === -1;
 
-    if (dir === 'up'    && !goingDown)  { ndx = 0;  ndy = -1; }
-    if (dir === 'down'  && !goingUp)    { ndx = 0;  ndy =  1; }
-    if (dir === 'left'  && !goingRight) { ndx = -1; ndy =  0; }
-    if (dir === 'right' && !goingLeft)  { ndx =  1; ndy =  0; }
+    let target = null;
+    if (dir === 'up')    target = { x: 0, y: -1 };
+    if (dir === 'down')  target = { x: 0, y: 1 };
+    if (dir === 'left')  target = { x: -1, y: 0 };
+    if (dir === 'right') target = { x: 1, y: 0 };
+    if (!target) return;
+
+    const lastDir = inputQueue.length > 0 ? inputQueue[inputQueue.length - 1] : { x: dx, y: dy };
+
+    // Prevent immediate 180-degree self-collision reversal
+    if (target.x === -lastDir.x && target.y === -lastDir.y) return;
+    // Prevent duplicate consecutive input
+    if (target.x === lastDir.x && target.y === lastDir.y) return;
+
+    // Queue up to 2 responsive moves for crisp multi-direction turns
+    if (inputQueue.length < 2) {
+        inputQueue.push(target);
+    }
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -728,6 +1114,26 @@ document.addEventListener('keydown', e => {
     if (prevent.includes(e.code)) e.preventDefault();
 
     if (e.code === 'KeyM') { soundBtn.click(); return; }
+
+    // Escape key modal dismiss navigation
+    if (e.code === 'Escape') {
+        if (difficultySelectScreen && !difficultySelectScreen.classList.contains('hidden')) {
+            hideDifficultySelect();
+            return;
+        }
+        if (modeSelectScreen && !modeSelectScreen.classList.contains('hidden')) {
+            hideModeSelect();
+            return;
+        }
+        if (settingsScreen && !settingsScreen.classList.contains('hidden')) {
+            hideSettings();
+            return;
+        }
+        if (resetHsModal && !resetHsModal.classList.contains('hidden')) {
+            resetHsModal.classList.add('hidden');
+            return;
+        }
+    }
 
     if ((e.code === 'KeyP' || e.code === 'Space') && gameStarted && !isGameOver) {
         togglePause();
@@ -822,14 +1228,11 @@ function handleTouchCancel() {
     touchSwiped = false;
 }
 
-// Bind swipe gestures with non-passive listeners for preventDefault
-[canvas, wrapper].forEach(target => {
-    if (!target) return;
-    target.addEventListener('touchstart', handleTouchStart, { passive: false });
-    target.addEventListener('touchmove',  handleTouchMove,  { passive: false });
-    target.addEventListener('touchend',    handleTouchEnd,    { passive: false });
-    target.addEventListener('touchcancel', handleTouchCancel, { passive: false });
-});
+// Bind swipe gestures on canvas with non-passive listeners for preventDefault
+canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+canvas.addEventListener('touchmove',  handleTouchMove,  { passive: false });
+canvas.addEventListener('touchend',    handleTouchEnd,    { passive: false });
+canvas.addEventListener('touchcancel', handleTouchCancel, { passive: false });
 
 /* ══════════════════════════════════════════════════════════
    D-PAD CONTROLS (Pointer Events for Touch & Mouse)
