@@ -12,7 +12,7 @@
     <meta name="theme-color" content="#080a12">
     <title>Neon Snake</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1000">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@300;400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -30,21 +30,7 @@
             <span class="live-indicator"><span class="pulse-dot"></span> 1 PLAYING</span>
         </div>
         <div class="nav-right">
-            <!-- Player Profile Badge -->
-            <div id="player-profile-badge" class="player-profile-badge nav-chip" title="Click to change name">
-                <span class="player-avatar">🐍</span>
-                <span id="player-name-display" class="player-name-display">Player</span>
-                <button id="edit-name-btn" class="edit-name-btn" title="Change Name" aria-label="Change Name">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-                </button>
-            </div>
-            
-            <!-- Language Selector Pill -->
-            <div class="lang-toggle-group nav-chip" aria-label="Language Selector">
-                <button id="lang-btn-en" class="lang-btn active" data-lang="en">EN</button>
-                <span class="lang-divider">|</span>
-                <button id="lang-btn-ar" class="lang-btn" data-lang="ar">AR</button>
-            </div>
+            <!-- Items moved to Settings Modal -->
         </div>
     </nav>
 
@@ -123,7 +109,7 @@
                     </h2>
                     <div class="menu-actions hero-actions">
                         <button id="menu-play-btn" class="glow-btn menu-btn hero-btn" data-i18n="play">▶ PLAY</button>
-                        <button id="menu-leaderboard-btn" class="glow-btn secondary-btn menu-btn hero-btn" data-i18n="leaderboardBtn">🏆 LEADERBOARD</button>
+                        <button id="menu-leaderboard-btn" class="glow-btn secondary-btn menu-btn hero-btn" data-i18n="leaderboardBtn"><svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7"></path><path d="M14 14.66V17c0 .55.45 1 1 1h2"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg> LEADERBOARD</button>
                         <button id="menu-settings-btn" class="glow-btn secondary-btn menu-btn hero-btn" data-i18n="settings">⚙ SETTINGS</button>
                     </div>
                 </div>
@@ -141,10 +127,10 @@
 
                     <form id="player-name-form" class="name-form" onsubmit="return false;">
                         <div class="input-wrapper">
-                            <input type="text" id="player-name-input" class="cyber-input" autocomplete="off" maxlength="12" minlength="3" placeholder="Player Name..." data-i18n-placeholder="namePlaceholder" required />
+                            <input type="text" id="player-name-input" class="cyber-input" autocomplete="off" maxlength="16" minlength="3" placeholder="Player Name..." data-i18n-placeholder="namePlaceholder" required />
                             <span class="input-glow"></span>
                         </div>
-                        <p id="name-error-msg" class="name-error-msg hidden" data-i18n="nameError">Name must be 3 to 12 characters.</p>
+                        <p id="name-error-msg" class="name-error-msg hidden" data-i18n="nameError">Name must be 3 to 16 characters.</p>
                         <button type="submit" id="save-name-btn" class="glow-btn menu-btn" data-i18n="continueBtn">CONTINUE ▶</button>
                     </form>
                 </div>
@@ -228,6 +214,28 @@
                     <h2 class="overlay-title glow-cyan" data-i18n="settingsTitle">SETTINGS</h2>
 
                     <div class="settings-list">
+                        <!-- Language Selector -->
+                        <div class="setting-row">
+                            <span class="setting-label">LANGUAGE / اللغة</span>
+                            <div class="lang-toggle-group nav-chip" aria-label="Language Selector">
+                                <button id="lang-btn-en" class="lang-btn active" data-lang="en">EN</button>
+                                <span class="lang-divider">|</span>
+                                <button id="lang-btn-ar" class="lang-btn" data-lang="ar">AR</button>
+                            </div>
+                        </div>
+
+                        <!-- Player Profile / Change Name -->
+                        <div class="setting-row">
+                            <span class="setting-label" data-i18n="editName">Change Name</span>
+                            <div id="player-profile-badge" class="player-profile-badge nav-chip" title="Click to change name">
+                                <span class="player-avatar">🐍</span>
+                                <span id="player-name-display" class="player-name-display">Player</span>
+                                <button id="edit-name-btn" class="edit-name-btn" title="Change Name" aria-label="Change Name">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+
                         <!-- Sound Effects Toggle -->
                         <div class="setting-row">
                             <span class="setting-label" data-i18n="sfx">SOUND EFFECTS</span>
@@ -240,28 +248,31 @@
                         <div class="setting-box">
                             <span class="setting-box-title" data-i18n="controls">CONTROLS</span>
                             <div class="setting-hints-grid">
-                                <div class="setting-hint-item">
-                                    <span class="key-chip-sm" data-i18n="arrowsOrWasd">↑↓←→ / WASD</span>
+                                <div class="setting-hint-item" style="grid-column: 1 / -1;">
+                                    <div style="display: flex; gap: 8px;">
+                                        <span class="key-chip-sm" data-i18n="arrowsOrWasd" style="min-width: 105px;">↑↓←→ / WASD</span>
+                                        <span class="key-chip-sm" data-i18n="swipeOrDpad" style="min-width: 105px;">TOUCH / SWIPE</span>
+                                    </div>
                                     <span data-i18n="move">Move</span>
                                 </div>
                                 <div class="setting-hint-item">
-                                    <span class="key-chip-sm" data-i18n="swipeOrDpad">SWIPE / D-PAD</span>
-                                    <span data-i18n="move">Move</span>
-                                </div>
-                                <div class="setting-hint-item">
-                                    <span class="key-chip-sm">P / Space</span>
+                                    <span class="key-chip-sm" style="min-width: 80px;">P / Space</span>
                                     <span data-i18n="pause">Pause</span>
                                 </div>
                                 <div class="setting-hint-item">
-                                    <span class="key-chip-sm">M</span>
+                                    <span class="key-chip-sm" style="min-width: 80px;">M</span>
                                     <span data-i18n="toggleSound">Sound</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Reset High Score Button -->
+                        <!-- Reset High Score Buttons -->
                         <div class="setting-row reset-row">
-                            <button id="setting-reset-hs-btn" class="danger-btn" data-i18n="resetHighScore">🗑 RESET BEST SCORE</button>
+                            <div class="reset-btn-grid">
+                                <button id="reset-score-easy" class="danger-btn-sm" data-i18n="resetEasy">Reset Easy</button>
+                                <button id="reset-score-medium" class="danger-btn-sm" data-i18n="resetMedium">Reset Medium</button>
+                                <button id="reset-score-hard" class="danger-btn-sm" data-i18n="resetHard">Reset Hard</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -318,7 +329,7 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                     <h2 class="overlay-title glow-cyan" data-i18n="leaderboardTitle">GLOBAL LEADERBOARD</h2>
-                    <p class="overlay-subtitle" data-i18n="leaderboardSubtitle">TOP 50 CYBER RUNNERS</p>
+                    <p class="overlay-subtitle" data-i18n="leaderboardSubtitle">TOP 50</p>
 
                     <!-- Difficulty Filter Tabs -->
                     <div class="lb-filter-tabs" aria-label="Leaderboard Filter">
@@ -336,12 +347,11 @@
                                     <th data-i18n="player">PLAYER</th>
                                     <th data-i18n="score">SCORE</th>
                                     <th data-i18n="difficulty">DIFFICULTY</th>
-                                    <th data-i18n="date">DATE</th>
                                 </tr>
                             </thead>
                             <tbody id="leaderboard-tbody">
                                 <tr>
-                                    <td colspan="5" class="lb-loading" data-i18n="loading">LOADING...</td>
+                                    <td colspan="4" class="lb-loading" data-i18n="loading">LOADING...</td>
                                 </tr>
                             </tbody>
                         </table>
@@ -376,14 +386,75 @@
 
     <!-- ── Bottom Global Footer Bar (Menu Only) ── -->
     <footer class="global-footer menu-only">
-        <div class="footer-left">v1.0.4 // NEON CORE</div>
+        <div id="secret-admin-trigger" class="footer-left">v1.0.4 // NEON CORE</div>
         <div class="footer-right">DEVELOPED BY ZAID</div>
     </footer>
+
+    <!-- 🔒 7. ADMIN AUTH MODAL -->
+    <div id="admin-auth-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Admin Authentication">
+        <div class="overlay-card admin-auth-card slide-in">
+            <button id="admin-auth-close-btn" class="modal-close-btn" title="Close" aria-label="Close Admin Auth">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h2 class="overlay-title glow-cyan">ADMIN CORE</h2>
+            <p class="overlay-subtitle">ENTER ACCESS PIN</p>
+            <div class="input-group" style="margin: 20px 0;">
+                <input type="password" id="admin-pin-input" class="cyber-input" placeholder="****" maxlength="8" autocomplete="off" style="text-align: center; letter-spacing: 4px;">
+            </div>
+            <button id="admin-auth-submit-btn" class="glow-btn" style="width: 100%;">AUTHORIZE</button>
+            <p id="admin-auth-error" class="error-msg hidden text-danger" style="margin-top: 10px;">ACCESS DENIED</p>
+        </div>
+    </div>
+
+    <!-- 🔒 8. ADMIN DASHBOARD MODAL -->
+    <div id="admin-dashboard-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Admin Dashboard">
+        <div class="overlay-card admin-dash-card slide-in">
+            <button id="admin-dash-close-btn" class="modal-close-btn" title="Close" aria-label="Close Admin Dashboard">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+            <h2 class="overlay-title glow-cyan" style="font-size: 1.6rem;">CYBER CORE // ADMIN PANEL</h2>
+            
+            <div class="admin-actions-bar" style="display: flex; gap: 8px; margin: 15px 0; justify-content: center; flex-wrap: wrap;">
+                <button class="danger-btn-sm" id="admin-wipe-easy-btn">WIPE EASY</button>
+                <button class="danger-btn-sm" id="admin-wipe-medium-btn">WIPE MED</button>
+                <button class="danger-btn-sm" id="admin-wipe-hard-btn">WIPE HARD</button>
+                <button class="danger-btn-sm btn-danger-solid" id="admin-reset-all-btn" style="background: rgba(255,45,85,0.2); border-color: #ff2d55;">⚠ RESET ALL</button>
+            </div>
+            
+            <div class="admin-search-bar" style="margin-bottom: 15px;">
+                <input type="text" id="admin-search-input" class="cyber-input" placeholder="Search player name..." autocomplete="off">
+            </div>
+
+            <div class="lb-filters admin-filters" id="admin-filters" style="margin-bottom: 15px; display: flex; justify-content: center; gap: 8px;">
+                <button class="lb-tab active" data-diff="all">ALL</button>
+                <button class="lb-tab" data-diff="easy">EASY</button>
+                <button class="lb-tab" data-diff="medium">MEDIUM</button>
+                <button class="lb-tab" data-diff="hard">HARD</button>
+            </div>
+
+            <div class="admin-table-wrapper" style="flex: 1; overflow-y: auto;">
+                <table class="admin-table" style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;">
+                    <thead style="position: sticky; top: 0; background: rgba(12,18,36,0.95); z-index: 2;">
+                        <tr>
+                            <th style="padding: 8px; color: #a3e7fc; border-bottom: 1px solid rgba(0,243,255,0.2);">PLAYER</th>
+                            <th style="padding: 8px; color: #a3e7fc; border-bottom: 1px solid rgba(0,243,255,0.2);">SCORE</th>
+                            <th style="padding: 8px; color: #a3e7fc; border-bottom: 1px solid rgba(0,243,255,0.2);">DIFF</th>
+                            <th style="padding: 8px; color: #a3e7fc; border-bottom: 1px solid rgba(0,243,255,0.2);">STATUS</th>
+                            <th style="padding: 8px; color: #a3e7fc; border-bottom: 1px solid rgba(0,243,255,0.2); text-align: center;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-tbody">
+                        <tr><td colspan="5" style="text-align: center; padding: 20px; color: #00f3ff;">LOADING DATA...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
     <!-- Firebase App & Firestore SDKs (Compat) -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <script src="script.js?v=2.0.0"></script>
+    <script src="script.js?v=1000"></script>
 </body>
 </html>

@@ -69,7 +69,9 @@ const playIcon         = document.getElementById('play-icon');
 // Settings Elements
 const settingSfxBtn      = document.getElementById('setting-sfx-btn');
 const settingSfxText     = document.getElementById('setting-sfx-text');
-const settingResetHsBtn  = document.getElementById('setting-reset-hs-btn');
+const resetScoreEasy     = document.getElementById('reset-score-easy');
+const resetScoreMedium   = document.getElementById('reset-score-medium');
+const resetScoreHard     = document.getElementById('reset-score-hard');
 const resetConfirmYes    = document.getElementById('reset-confirm-yes');
 const resetConfirmNo     = document.getElementById('reset-confirm-no');
 
@@ -171,11 +173,14 @@ const i18n = {
         sfx: 'SOUND EFFECTS',
         controls: 'CONTROLS',
         arrowsOrWasd: '↑↓←→ / WASD',
-        swipeOrDpad: 'SWIPE / D-PAD',
+        swipeOrDpad: 'TOUCH / SWIPE',
         move: 'Move',
         pause: 'Pause',
         toggleSound: 'Sound',
         resetHighScore: '🗑 RESET BEST SCORE',
+        resetEasy: 'Reset Easy',
+        resetMedium: 'Reset Medium',
+        resetHard: 'Reset Hard',
         resetConfirmText: 'Reset best score to 0?',
         confirmYes: 'YES, RESET',
         confirmCancel: 'CANCEL',
@@ -189,12 +194,12 @@ const i18n = {
         on: 'ON',
         off: 'OFF',
         enterNameTitle: 'ENTER YOUR NAME',
-        namePlaceholder: 'Player Name (3-12 chars)...',
+        namePlaceholder: 'Player Name (3-16 chars)...',
         continueBtn: 'CONTINUE ▶',
-        nameError: 'Name must be 3 to 12 characters.',
+        nameError: 'Name must be 3 to 16 characters.',
         editName: 'Change Name',
         leaderboardTitle: 'GLOBAL LEADERBOARD',
-        leaderboardSubtitle: 'TOP 50 CYBER RUNNERS',
+        leaderboardSubtitle: 'TOP 50',
         leaderboardBtn: '🏆 LEADERBOARD',
         lbTabAll: 'ALL',
         rank: 'RANK',
@@ -232,11 +237,14 @@ const i18n = {
         sfx: 'المؤثرات الصوتية',
         controls: 'أزرار التحكم',
         arrowsOrWasd: '↑↓←→ / WASD',
-        swipeOrDpad: 'السحب / الأسهم',
+        swipeOrDpad: 'اللمس / السحب',
         move: 'تحريك',
         pause: 'إيقاف مؤقت',
         toggleSound: 'كتم الصوت',
         resetHighScore: '🗑 تصفير أفضل نتيجة',
+        resetEasy: 'تصفير السهل',
+        resetMedium: 'تصفير المتوسط',
+        resetHard: 'تصفير الصعب',
         resetConfirmText: 'هل تريد تصفير أفضل نتيجة؟',
         confirmYes: 'نعم، تصفير',
         confirmCancel: 'إلغاء',
@@ -250,12 +258,12 @@ const i18n = {
         on: 'تشغيل',
         off: 'إيقاف',
         enterNameTitle: 'أدخل اسمك',
-        namePlaceholder: 'اسم اللاعب (3-12 حرف)...',
+        namePlaceholder: 'اسم اللاعب (3-16 حرف)...',
         continueBtn: 'متابعة ◀',
-        nameError: 'الاسم يجب أن يكون من 3 إلى 12 حرفاً.',
+        nameError: 'الاسم يجب أن يكون من 3 إلى 16 حرفاً.',
         editName: 'تغيير الاسم',
         leaderboardTitle: 'لوحة المتصدرين العالمية',
-        leaderboardSubtitle: 'أفضل 50 لاعب سايبر',
+        leaderboardSubtitle: 'أفضل 50',
         leaderboardBtn: '🏆 لوحة المتصدرين',
         lbTabAll: 'الكل',
         rank: 'الترتيب',
@@ -547,16 +555,27 @@ if (settingSfxBtn) {
     });
 }
 
-// Reset High Score Modal
-if (settingResetHsBtn) {
-    settingResetHsBtn.addEventListener('click', () => {
-        sounds.click();
-        if (resetHsModal) {
-            resetHsModal.classList.remove('hidden');
-            resetHsModal.style.setProperty('display', 'flex', 'important');
-        }
-    });
+let pendingResetDiff = null;
+
+function handleResetClick(diff) {
+    sounds.click();
+    pendingResetDiff = diff;
+    if (resetHsModal) {
+        const diffKey = `reset${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
+        const diffName = currentLang === 'ar' ? i18n.ar[diffKey] : i18n.en[diffKey];
+        const modalText = currentLang === 'ar' ? `هل تريد ${diffName}؟` : `${diffName} best score to 0?`;
+        
+        const resetConfirmText = document.querySelector('.confirm-text');
+        if(resetConfirmText) resetConfirmText.textContent = modalText;
+
+        resetHsModal.classList.remove('hidden');
+        resetHsModal.style.setProperty('display', 'flex', 'important');
+    }
 }
+
+if (resetScoreEasy) resetScoreEasy.addEventListener('click', () => handleResetClick('easy'));
+if (resetScoreMedium) resetScoreMedium.addEventListener('click', () => handleResetClick('medium'));
+if (resetScoreHard) resetScoreHard.addEventListener('click', () => handleResetClick('hard'));
 
 if (resetConfirmNo) {
     resetConfirmNo.addEventListener('click', () => {
@@ -565,6 +584,7 @@ if (resetConfirmNo) {
             resetHsModal.classList.add('hidden');
             resetHsModal.style.setProperty('display', 'none', 'important');
         }
+        pendingResetDiff = null;
     });
 }
 
@@ -603,20 +623,54 @@ function updateHighScoreDisplay() {
 
 if (resetConfirmYes) {
     resetConfirmYes.addEventListener('click', () => {
+        if (!pendingResetDiff) return;
         sounds.click();
-        ['easy', 'medium', 'hard'].forEach(d => {
-            localStorage.removeItem(`neonSnake_high_${d}`);
+        
+        const d = pendingResetDiff;
+        
+        // 1. Reset Best Scores locally for targeted difficulty
+        localStorage.removeItem(`neonSnake_high_${d}`);
+        if (typeof bestScores !== 'undefined') bestScores[d] = 0;
+        
+        if (currentDifficulty === d) {
             saveHighScore(0, d);
-        });
-        localStorage.removeItem('snakeHighScore');
-        highScore = 0;
-        highScoreEl.textContent = '0';
-        if (finalHSEl) finalHSEl.textContent = '0';
-        updateHighScoreDisplay();
+            localStorage.removeItem('snakeHighScore');
+            highScore = 0;
+            highScoreEl.textContent = '0';
+            if (finalHSEl) finalHSEl.textContent = '0';
+            updateHighScoreDisplay();
+        }
+
+        // 2. Remove player records from targeted difficulty list in Leaderboard (Firebase)
+        if (typeof db !== 'undefined' && db && typeof getPlayerId === 'function') {
+            const pid = getPlayerId();
+            db.collection('leaderboard').doc(`${pid}_${d}`).delete().catch(e => console.log('LB Delete Error:', e));
+            // Re-render UI if leaderboard is open
+            if (typeof leaderboardScreen !== 'undefined' && leaderboardScreen && !leaderboardScreen.classList.contains('hidden') && typeof loadLeaderboard === 'function') {
+                loadLeaderboard();
+            }
+        }
+
+        // 3. Close Modal
         if (resetHsModal) {
             resetHsModal.classList.add('hidden');
             resetHsModal.style.setProperty('display', 'none', 'important');
         }
+
+        // 4. Show confirmation toast
+        const toast = document.createElement('div');
+        const diffNameEn = d.charAt(0).toUpperCase() + d.slice(1);
+        const diffNameAr = d === 'easy' ? 'السهل' : (d === 'medium' ? 'المتوسط' : 'الصعب');
+        toast.textContent = currentLang === 'ar' ? `تم تصفير سكور المستوى ${diffNameAr} بنجاح` : `${diffNameEn} score reset successfully`;
+        toast.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);background:rgba(0,255,204,0.15);border:1px solid #00ffcc;color:#00ffcc;padding:12px 24px;border-radius:8px;z-index:9999;font-weight:bold;text-shadow:0 0 10px rgba(0,255,204,0.8);backdrop-filter:blur(10px);pointer-events:none;animation:container-in 0.3s ease-out;';
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.4s ease';
+            setTimeout(() => toast.remove(), 400);
+        }, 3000);
+        
+        pendingResetDiff = null;
     });
 }
 
@@ -864,14 +918,45 @@ function showPlayerNameModal(isEdit = false) {
     }, 150);
 }
 
+const PROFANITY_LIST_EN = ['fuck', 'shit', 'bitch', 'asshole', 'cunt', 'dick', 'cock', 'faggot', 'nigger', 'nigga', 'slut', 'whore', 'bastard'];
+const PROFANITY_LIST_AR = ['قحبة', 'شرموطة', 'منيوك', 'كسم', 'كس أم', 'عرص', 'خول', 'زبي', 'مومس', 'متناك', 'نيك'];
+
+function checkProfanity(name) {
+    const norm = name.toLowerCase()
+                     .replace(/5/g, 's').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a')
+                     .replace(/0/g, 'o').replace(/[@]/g, 'a').replace(/[!]/g, 'i').replace(/[\*\$]/g, '')
+                     .replace(/[\u064B-\u0652]/g, '') 
+                     .replace(/ـ/g, '')
+                     .replace(/[أإآ]/g, 'ا')
+                     .replace(/ى/g, 'ي')
+                     .replace(/ة/g, 'ه');
+    
+    for (const w of PROFANITY_LIST_EN) if (norm.includes(w)) return true;
+    for (const w of PROFANITY_LIST_AR) if (norm.includes(w)) return true;
+    return false;
+}
+
 function savePlayerName(e) {
     if (e) e.preventDefault();
     if (!playerNameInput) return;
 
     const val = playerNameInput.value.trim();
-    if (val.length < 3 || val.length > 12) {
-        if (nameErrorMsg) nameErrorMsg.classList.remove('hidden');
+    if (val.length < 3 || val.length > 16) {
+        if (nameErrorMsg) {
+            nameErrorMsg.textContent = i18n[currentLang]?.nameError || 'Name must be 3 to 16 characters.';
+            nameErrorMsg.classList.remove('hidden');
+        }
         playerNameInput.classList.add('input-error');
+        return;
+    }
+
+    if (checkProfanity(val)) {
+        if (nameErrorMsg) {
+            nameErrorMsg.textContent = currentLang === 'ar' ? 'اسم غير لائق' : 'Inappropriate name';
+            nameErrorMsg.classList.remove('hidden');
+        }
+        playerNameInput.classList.add('input-error');
+        sounds.die();
         return;
     }
 
@@ -1547,8 +1632,21 @@ function hideNameModal() {
 async function handleNameSave(e) {
     if (e) e.preventDefault();
     const rawVal = playerNameInput ? playerNameInput.value.trim() : '';
-    if (rawVal.length < 3 || rawVal.length > 12) {
-        if (nameErrorMsg) nameErrorMsg.classList.remove('hidden');
+    if (rawVal.length < 3 || rawVal.length > 16) {
+        if (nameErrorMsg) {
+            nameErrorMsg.textContent = i18n[currentLang]?.nameError || 'Name must be 3 to 16 characters.';
+            nameErrorMsg.classList.remove('hidden');
+        }
+        if (playerNameInput) playerNameInput.classList.add('input-error');
+        sounds.die();
+        return;
+    }
+
+    if (checkProfanity(rawVal)) {
+        if (nameErrorMsg) {
+            nameErrorMsg.textContent = currentLang === 'ar' ? 'اسم غير لائق' : 'Inappropriate name';
+            nameErrorMsg.classList.remove('hidden');
+        }
         if (playerNameInput) playerNameInput.classList.add('input-error');
         sounds.die();
         return;
@@ -1628,6 +1726,10 @@ async function saveLeaderboardScore(scoreVal, diffVal) {
             });
         } else {
             const existingData = docSnap.data();
+            if (existingData.banned) {
+                console.warn('Player is banned, score rejected.');
+                return;
+            }
             const existingScore = existingData.score || 0;
             if (scoreVal > existingScore) {
                 await docRef.set({
@@ -1674,11 +1776,11 @@ function loadLeaderboard() {
     if (!leaderboardTbody) return;
     
     const loadingText = i18n[currentLang]?.loading || 'LOADING...';
-    leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-loading">${loadingText}</td></tr>`;
+    leaderboardTbody.innerHTML = `<tr><td colspan="4" class="lb-loading">${loadingText}</td></tr>`;
 
     if (!db) {
         const errText = i18n[currentLang]?.errorLoading || 'FAILED TO LOAD';
-        leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-empty">${errText}</td></tr>`;
+        leaderboardTbody.innerHTML = `<tr><td colspan="4" class="lb-empty">${errText}</td></tr>`;
         return;
     }
 
@@ -1689,7 +1791,7 @@ function loadLeaderboard() {
          .then((querySnapshot) => {
              if (querySnapshot.empty) {
                  const noScoresText = i18n[currentLang]?.noScores || 'NO SCORES YET';
-                 leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-empty">${noScoresText}</td></tr>`;
+                 leaderboardTbody.innerHTML = `<tr><td colspan="4" class="lb-empty">${noScoresText}</td></tr>`;
                  return;
              }
 
@@ -1718,15 +1820,6 @@ function loadLeaderboard() {
 
                  const name = data.name || 'Anonymous';
                  const scoreNum = data.score || 0;
-                 
-                 let dateStr = 'Recently';
-                 if (data.timestamp && data.timestamp.toDate) {
-                     const d = data.timestamp.toDate();
-                     dateStr = d.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', {
-                         month: 'short',
-                         day: 'numeric'
-                     });
-                 }
 
                  let rankBadge = `${rank}`;
                  let rankClass = 'rank-normal';
@@ -1743,7 +1836,6 @@ function loadLeaderboard() {
                          <td class="lb-name">${escapeHtml(name)}</td>
                          <td class="lb-score">${scoreNum}</td>
                          <td class="lb-diff"><span class="diff-badge-sm diff-sm-${diff}">${diffBadgeText}</span></td>
-                         <td class="lb-date">${dateStr}</td>
                      </tr>
                  `;
                  rank++;
@@ -1751,7 +1843,7 @@ function loadLeaderboard() {
              
              if (html === '') {
                  const noScoresText = i18n[currentLang]?.noScores || 'NO SCORES YET';
-                 leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-empty">${noScoresText}</td></tr>`;
+                 leaderboardTbody.innerHTML = `<tr><td colspan="4" class="lb-empty">${noScoresText}</td></tr>`;
              } else {
                  leaderboardTbody.innerHTML = html;
              }
@@ -1759,7 +1851,7 @@ function loadLeaderboard() {
          .catch((error) => {
              console.error('Error getting leaderboard:', error);
              const errText = i18n[currentLang]?.errorLoading || 'FAILED TO LOAD';
-             leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-empty">${errText}</td></tr>`;
+             leaderboardTbody.innerHTML = `<tr><td colspan="4" class="lb-empty">${errText}</td></tr>`;
          });
 }
 
@@ -1770,4 +1862,271 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+/* ══════════════════════════════════════════════════════════
+   ADMIN SECRETS & DASHBOARD
+   ══════════════════════════════════════════════════════════ */
+const ADMIN_PIN = "1337";
+const adminDashboardModal = document.getElementById('admin-dashboard-modal');
+const adminAuthModal = document.getElementById('admin-auth-modal');
+const adminPinInput = document.getElementById('admin-pin-input');
+const adminAuthSubmitBtn = document.getElementById('admin-auth-submit-btn');
+const adminAuthError = document.getElementById('admin-auth-error');
+const adminAuthCloseBtn = document.getElementById('admin-auth-close-btn');
+const adminDashCloseBtn = document.getElementById('admin-dash-close-btn');
+const adminTbody = document.getElementById('admin-tbody');
+const adminSearchInput = document.getElementById('admin-search-input');
+
+document.addEventListener('keydown', (e) => {
+    // Check for '*' or Shift + '8'
+    if (e.key === '*' || (e.shiftKey && (e.key === '*' || e.code === 'Digit8' || e.code === 'NumpadMultiply'))) {
+        e.preventDefault();
+        showAdminAuth();
+    }
+});
+
+function showAdminAuth() {
+    adminAuthModal.classList.remove('hidden');
+    adminAuthModal.style.setProperty('display', 'flex', 'important');
+    adminPinInput.value = '';
+    adminAuthError.classList.add('hidden');
+    adminPinInput.classList.remove('input-error', 'shake-error');
+    setTimeout(() => adminPinInput.focus(), 100);
+}
+
+if (adminAuthCloseBtn) {
+    adminAuthCloseBtn.addEventListener('click', () => {
+        adminAuthModal.classList.add('hidden');
+        adminAuthModal.style.setProperty('display', 'none', 'important');
+    });
+}
+
+if (adminDashCloseBtn) {
+    adminDashCloseBtn.addEventListener('click', () => {
+        adminDashboardModal.classList.add('hidden');
+        adminDashboardModal.style.setProperty('display', 'none', 'important');
+    });
+}
+
+if (adminAuthSubmitBtn) {
+    adminAuthSubmitBtn.addEventListener('click', handleAdminAuth);
+}
+if (adminPinInput) {
+    adminPinInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') handleAdminAuth();
+    });
+}
+
+function handleAdminAuth() {
+    const pin = adminPinInput.value;
+    if (pin === ADMIN_PIN) {
+        adminAuthModal.classList.add('hidden');
+        adminAuthModal.style.setProperty('display', 'none', 'important');
+        showAdminDashboard();
+    } else {
+        adminAuthError.classList.remove('hidden');
+        adminPinInput.classList.remove('shake-error');
+        void adminPinInput.offsetWidth; // trigger reflow
+        adminPinInput.classList.add('shake-error', 'input-error');
+        if (typeof sounds !== 'undefined' && sounds.die) sounds.die();
+    }
+}
+
+function showAdminDashboard() {
+    adminDashboardModal.classList.remove('hidden');
+    adminDashboardModal.style.setProperty('display', 'flex', 'important');
+    loadAdminData();
+}
+
+let allAdminDocs = [];
+
+function loadAdminData() {
+    if (!db) return;
+    adminTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px; color: #00f3ff;">LOADING DATA...</td></tr>';
+    
+    db.collection('leaderboard').orderBy('score', 'desc').limit(300).get()
+        .then(snapshot => {
+            if (snapshot.empty) {
+                adminTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">NO DATA</td></tr>';
+                return;
+            }
+            
+            allAdminDocs = [];
+            snapshot.forEach(doc => {
+                allAdminDocs.push({ id: doc.id, ...doc.data() });
+            });
+            renderAdminTable(allAdminDocs);
+        })
+        .catch(err => {
+            console.error('Error loading admin data:', err);
+            adminTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: red;">ERROR LOADING DATA</td></tr>';
+        });
+}
+
+function renderAdminTable(dataArray) {
+    if (dataArray.length === 0) {
+        adminTbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 20px;">NO RESULTS</td></tr>';
+        return;
+    }
+    let html = '';
+    dataArray.forEach(d => {
+        const statusBadge = d.banned ? '<span class="status-badge status-banned">BANNED</span>' : '<span class="status-badge status-active">ACTIVE</span>';
+        
+        html += `
+            <tr>
+                <td style="width: 25%; text-align: left; padding-left: 20px;">
+                    <span class="admin-player-name" style="cursor:pointer; font-size:1.05rem; font-weight:600;" onclick="adminEditName('${d.id}', '${escapeHtml(d.name || 'Anonymous').replace(/'/g, "\\'")}')">${escapeHtml(d.name || 'Anonymous')}</span>
+                </td>
+                <td style="width: 15%; text-align: center;">
+                    <span class="admin-player-score" style="cursor:pointer; font-size:1.15rem; font-weight:800; color:var(--cyan);" onclick="adminEditScore('${d.id}', ${d.score || 0})">${d.score || 0}</span>
+                </td>
+                <td style="width: 15%; text-align: center;">
+                    <span class="diff-badge-sm diff-sm-${d.difficulty || 'medium'}">${d.difficulty || 'medium'}</span>
+                </td>
+                <td style="width: 15%; text-align: center;">
+                    <span class="status-badge ${d.banned ? 'status-banned' : 'status-active'}">${d.banned ? 'BANNED' : 'ACTIVE'}</span>
+                </td>
+                <td style="width: 30%; text-align: center;">
+                    <div class="admin-actions-wrap">
+                        <button class="admin-action-icon" style="font-size: 1.25rem;" onclick="adminEditName('${d.id}', '${escapeHtml(d.name || 'Anonymous').replace(/'/g, "\\'")}')" title="Edit Name">🏷️</button>
+                        <button class="admin-action-icon" style="font-size: 1.25rem;" onclick="adminEditScore('${d.id}', ${d.score || 0})" title="Edit Score">✏️</button>
+                        <button class="admin-action-icon" style="font-size: 1.25rem;" onclick="adminBanPlayer('${d.id}', ${!d.banned})" title="${d.banned ? 'Unban' : 'Ban'}">🚫</button>
+                        <button class="admin-action-icon" style="font-size: 1.25rem;" onclick="adminDeleteScore('${d.id}')" title="Delete Entry">🗑️</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    adminTbody.innerHTML = html;
+}
+
+let currentAdminFilter = 'all';
+
+function filterAdminData() {
+    const q = adminSearchInput ? adminSearchInput.value.toLowerCase() : '';
+    let filtered = allAdminDocs;
+    
+    if (currentAdminFilter !== 'all') {
+        filtered = filtered.filter(d => (d.difficulty || 'medium') === currentAdminFilter);
+    }
+    
+    if (q) {
+        filtered = filtered.filter(d => (d.name || '').toLowerCase().includes(q));
+    }
+    
+    renderAdminTable(filtered);
+}
+
+if (adminSearchInput) {
+    adminSearchInput.addEventListener('input', filterAdminData);
+}
+
+document.querySelectorAll('#admin-filters .lb-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+        document.querySelectorAll('#admin-filters .lb-tab').forEach(t => t.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        currentAdminFilter = e.currentTarget.getAttribute('data-diff') || 'all';
+        filterAdminData();
+    });
+});
+
+window.adminEditScore = async function(docId, currentScore) {
+    const rawNewScore = prompt('Enter new score for player:', currentScore);
+    if (rawNewScore === null) return; // user cancelled
+    
+    const newScore = parseInt(rawNewScore, 10);
+    if (isNaN(newScore) || newScore < 0) {
+        alert('Invalid score. Please enter a positive number.');
+        return;
+    }
+    
+    try {
+        await db.collection('leaderboard').doc(docId).update({ score: newScore });
+        loadAdminData();
+    } catch (e) {
+        console.error(e);
+        alert('Failed to edit score.');
+    }
+};
+
+window.adminEditName = async function(docId, currentName) {
+    const rawNewName = prompt('Enter new name for player:', currentName);
+    if (rawNewName === null) return;
+    
+    const newName = rawNewName.trim();
+    if (newName.length < 3 || newName.length > 16) {
+        alert('Invalid name. Must be between 3 and 16 characters.');
+        return;
+    }
+    
+    try {
+        await db.collection('leaderboard').doc(docId).update({ name: newName });
+        loadAdminData();
+    } catch (e) {
+        console.error(e);
+        alert('Failed to edit name.');
+    }
+};
+
+window.adminDeleteScore = async function(docId) {
+    if (confirm('Are you sure you want to permanently delete this score?')) {
+        try {
+            await db.collection('leaderboard').doc(docId).delete();
+            loadAdminData();
+        } catch (e) {
+            console.error(e);
+            alert('Failed to delete score.');
+        }
+    }
+};
+
+window.adminBanPlayer = async function(docId, banState) {
+    if (confirm(`Are you sure you want to ${banState ? 'ban' : 'unban'} this player?`)) {
+        try {
+            await db.collection('leaderboard').doc(docId).update({ banned: banState });
+            loadAdminData();
+        } catch (e) {
+            console.error(e);
+            alert('Failed to update ban status.');
+        }
+    }
+};
+
+document.getElementById('admin-wipe-easy-btn')?.addEventListener('click', () => adminWipeByDifficulty('easy'));
+document.getElementById('admin-wipe-medium-btn')?.addEventListener('click', () => adminWipeByDifficulty('medium'));
+document.getElementById('admin-wipe-hard-btn')?.addEventListener('click', () => adminWipeByDifficulty('hard'));
+document.getElementById('admin-reset-all-btn')?.addEventListener('click', () => adminWipeByDifficulty('all'));
+
+async function adminWipeByDifficulty(diff) {
+    const msg = diff === 'all' 
+        ? '⚠️ WARNING: YOU ARE ABOUT TO WIPE THE ENTIRE LEADERBOARD! PROCEED?'
+        : `Are you sure you want to wipe all ${diff.toUpperCase()} scores?`;
+        
+    if (!confirm(msg)) return;
+    
+    try {
+        let query = db.collection('leaderboard');
+        if (diff !== 'all') {
+            query = query.where('difficulty', '==', diff);
+        }
+        
+        const snapshot = await query.get();
+        if (snapshot.empty) {
+            alert(`No scores found for ${diff}.`);
+            return;
+        }
+        
+        const batch = db.batch();
+        snapshot.docs.forEach(doc => {
+            batch.delete(doc.ref);
+        });
+        
+        await batch.commit();
+        alert(`Successfully wiped ${snapshot.size} scores.`);
+        loadAdminData();
+    } catch (e) {
+        console.error(e);
+        alert('Failed to wipe scores.');
+    }
 }
