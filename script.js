@@ -12,6 +12,8 @@ window.gameOverReason = 'self';
 // ── DOM References ──
 const canvas           = document.getElementById('gameCanvas');
 const ctx              = canvas.getContext('2d');
+const gameHeader       = document.getElementById('game-header');
+const gameFooter       = document.getElementById('game-footer');
 const scoreEl          = document.getElementById('score');
 const highScoreEl      = document.getElementById('high-score');
 const finalScoreEl     = document.getElementById('final-score');
@@ -26,6 +28,21 @@ const settingsScreen         = document.getElementById('settings-screen');
 const pauseScreen            = document.getElementById('pause-screen');
 const gameOverScr            = document.getElementById('game-over-screen');
 const resetHsModal           = document.getElementById('reset-hs-modal');
+const playerNameModal        = document.getElementById('player-name-modal');
+const playerNameInput        = document.getElementById('player-name-input');
+const playerNameForm         = document.getElementById('player-name-form');
+const nameErrorMsg           = document.getElementById('name-error-msg');
+const playerNameDisplay      = document.getElementById('player-name-display');
+const headerPlayerName       = document.getElementById('header-player-name');
+const playerHeaderTag        = document.getElementById('player-header-tag');
+const playerProfileBadge     = document.getElementById('player-profile-badge');
+const editNameBtn            = document.getElementById('edit-name-btn');
+const playerNameCloseBtn     = document.getElementById('player-name-close-btn');
+const leaderboardScreen       = document.getElementById('leaderboard-screen');
+const leaderboardTbody        = document.getElementById('leaderboard-tbody');
+const menuLeaderboardBtn      = document.getElementById('menu-leaderboard-btn');
+const gameoverLeaderboardBtn  = document.getElementById('gameover-leaderboard-btn');
+const leaderboardCloseBtn     = document.getElementById('leaderboard-close-btn');
 
 // Buttons
 const menuPlayBtn          = document.getElementById('menu-play-btn');
@@ -42,6 +59,7 @@ const resumeBtn        = document.getElementById('resume-btn');
 const pauseMenuBtn     = document.getElementById('pause-menu-btn');
 const gameoverMenuBtn  = document.getElementById('gameover-menu-btn');
 const pauseBtn         = document.getElementById('pause-btn');
+const homeBtn          = document.getElementById('home-btn');
 const soundBtn         = document.getElementById('sound-btn');
 const soundOnIcon      = document.getElementById('sound-on-icon');
 const soundOffIcon     = document.getElementById('sound-off-icon');
@@ -169,7 +187,22 @@ const i18n = {
         newBest: '🏆 NEW BEST!',
         playAgain: '↺ PLAY AGAIN',
         on: 'ON',
-        off: 'OFF'
+        off: 'OFF',
+        enterNameTitle: 'ENTER YOUR NAME',
+        namePlaceholder: 'Player Name (3-12 chars)...',
+        continueBtn: 'CONTINUE ▶',
+        nameError: 'Name must be 3 to 12 characters.',
+        editName: 'Change Name',
+        leaderboardTitle: 'GLOBAL LEADERBOARD',
+        leaderboardSubtitle: 'TOP 50 CYBER RUNNERS',
+        leaderboardBtn: '🏆 LEADERBOARD',
+        lbTabAll: 'ALL',
+        rank: 'RANK',
+        player: 'PLAYER',
+        date: 'DATE',
+        loading: 'LOADING...',
+        noScores: 'NO SCORES YET',
+        errorLoading: 'FAILED TO LOAD'
     },
     ar: {
         subtitle: 'نسخة السايبربانك',
@@ -215,7 +248,22 @@ const i18n = {
         newBest: '🏆 رقم قياسي جديد!',
         playAgain: '↺ العب مجدداً',
         on: 'تشغيل',
-        off: 'إيقاف'
+        off: 'إيقاف',
+        enterNameTitle: 'أدخل اسمك',
+        namePlaceholder: 'اسم اللاعب (3-12 حرف)...',
+        continueBtn: 'متابعة ◀',
+        nameError: 'الاسم يجب أن يكون من 3 إلى 12 حرفاً.',
+        editName: 'تغيير الاسم',
+        leaderboardTitle: 'لوحة المتصدرين العالمية',
+        leaderboardSubtitle: 'أفضل 50 لاعب سايبر',
+        leaderboardBtn: '🏆 لوحة المتصدرين',
+        lbTabAll: 'الكل',
+        rank: 'الترتيب',
+        player: 'اللاعب',
+        date: 'التاريخ',
+        loading: 'جاري التحميل...',
+        noScores: 'لا يوجد نتائج بعد',
+        errorLoading: 'فشل التحميل'
     }
 };
 
@@ -233,6 +281,13 @@ function setLanguage(lang) {
         const key = el.getAttribute('data-i18n');
         if (i18n[lang] && i18n[lang][key]) {
             el.textContent = i18n[lang][key];
+        }
+    });
+
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        if (i18n[lang] && i18n[lang][key]) {
+            el.setAttribute('placeholder', i18n[lang][key]);
         }
     });
 
@@ -586,7 +641,9 @@ const allOverlays = [
     difficultySelectScreen,
     settingsScreen,
     pauseScreen,
-    gameOverScr
+    gameOverScr,
+    playerNameModal,
+    leaderboardScreen
 ];
 
 function hideAllOverlays() {
@@ -605,6 +662,9 @@ function hideAllOverlays() {
 
 function showScreen(screenEl) {
     hideAllOverlays();
+    if (dpadContainer) {
+        dpadContainer.classList.add('hidden');
+    }
     if (screenEl) {
         screenEl.classList.remove('hidden');
         screenEl.setAttribute('aria-hidden', 'false');
@@ -617,6 +677,14 @@ function showMainMenu() {
     isPaused    = false;
     isGameOver  = false;
     gameStarted = false;
+    
+    document.body.classList.remove('game-over-active');
+    
+    if (dpadContainer) {
+        dpadContainer.classList.add('hidden');
+    }
+    
+    document.body.classList.remove('game-active');
     
     applyPauseUI(false);
     showScreen(mainMenuScreen);
@@ -682,7 +750,14 @@ function selectDifficultyAndStart(diff) {
     startGame();
 }
 
-menuPlayBtn.addEventListener('click', showModeSelect);
+menuPlayBtn.addEventListener('click', () => {
+    if (!getPlayerName()) {
+        localStorage.setItem('snakePlayerName', 'Player');
+        updatePlayerNameUI('Player');
+        if (typeof hideNameModal === 'function') hideNameModal();
+    }
+    showModeSelect();
+});
 if (modeSelectCloseBtn) modeSelectCloseBtn.addEventListener('click', hideModeSelect);
 if (modeClassicBtn) {
     modeClassicBtn.addEventListener('click', () => {
@@ -708,6 +783,9 @@ if (difficultyCloseBtn) difficultyCloseBtn.addEventListener('click', hideDifficu
 
 menuSettingsBtn.addEventListener('click', showSettings);
 if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', hideSettings);
+if (menuLeaderboardBtn) menuLeaderboardBtn.addEventListener('click', showLeaderboard);
+if (gameoverLeaderboardBtn) gameoverLeaderboardBtn.addEventListener('click', showLeaderboard);
+if (leaderboardCloseBtn) leaderboardCloseBtn.addEventListener('click', hideLeaderboard);
 pauseMenuBtn.addEventListener('click', () => { sounds.click(); showMainMenu(); });
 gameoverMenuBtn.addEventListener('click', () => { sounds.click(); showMainMenu(); });
 
@@ -729,6 +807,7 @@ function initState() {
     score       = 0;
     gameSpeed   = diffConfig.initSpeed;
     isGameOver  = false;
+    document.body.classList.remove('game-over-active');
     isPaused    = false;
     window.gameOverReason = '';
     isNewHS     = false;
@@ -744,11 +823,100 @@ function initState() {
 updateHighScoreDisplay();
 applyTheme();
 
+let playerName = localStorage.getItem('snakePlayerName') || '';
+window.playerName = playerName;
+
+function updatePlayerNameDisplay(name) {
+    const finalName = name && name.trim() ? name.trim() : 'Player';
+    if (playerNameDisplay) playerNameDisplay.textContent = finalName;
+    if (headerPlayerName) headerPlayerName.textContent = finalName;
+}
+
+function checkAndPromptPlayerName() {
+    const storedName = localStorage.getItem('snakePlayerName');
+    if (storedName && storedName.trim()) {
+        window.playerName = storedName.trim();
+        updatePlayerNameDisplay(window.playerName);
+    } else {
+        showPlayerNameModal(false);
+    }
+}
+
+function showPlayerNameModal(isEdit = false) {
+    if (!playerNameModal) return;
+    if (nameErrorMsg) nameErrorMsg.classList.add('hidden');
+    if (playerNameInput) {
+        playerNameInput.classList.remove('input-error');
+        playerNameInput.value = isEdit ? (window.playerName || '') : '';
+    }
+
+    if (playerNameCloseBtn) {
+        if (isEdit) {
+            playerNameCloseBtn.classList.remove('hidden');
+        } else {
+            playerNameCloseBtn.classList.add('hidden');
+        }
+    }
+
+    showScreen(playerNameModal);
+    setTimeout(() => {
+        if (playerNameInput) playerNameInput.focus();
+    }, 150);
+}
+
+function savePlayerName(e) {
+    if (e) e.preventDefault();
+    if (!playerNameInput) return;
+
+    const val = playerNameInput.value.trim();
+    if (val.length < 3 || val.length > 12) {
+        if (nameErrorMsg) nameErrorMsg.classList.remove('hidden');
+        playerNameInput.classList.add('input-error');
+        return;
+    }
+
+    if (nameErrorMsg) nameErrorMsg.classList.add('hidden');
+    playerNameInput.classList.remove('input-error');
+
+    localStorage.setItem('snakePlayerName', val);
+    window.playerName = val;
+    updatePlayerNameDisplay(val);
+    sounds.click();
+    showScreen(mainMenuScreen);
+}
+
+if (playerNameForm) {
+    playerNameForm.addEventListener('submit', savePlayerName);
+}
+if (editNameBtn) {
+    editNameBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        sounds.click();
+        showPlayerNameModal(true);
+    });
+}
+if (playerProfileBadge) {
+    playerProfileBadge.addEventListener('click', () => {
+        sounds.click();
+        showPlayerNameModal(true);
+    });
+}
+if (playerNameCloseBtn) {
+    playerNameCloseBtn.addEventListener('click', () => {
+        sounds.click();
+        showScreen(mainMenuScreen);
+    });
+}
+
 setLanguage(currentLang);
 applySoundUI();
 initState();
 placeFood();
 resizeCanvas();
+if (dpadContainer) {
+    dpadContainer.classList.add('hidden');
+}
+checkAndPromptPlayerName();
 requestAnimationFrame(() => { resizeCanvas(); drawFrame(1); });
 
 /* ══════════════════════════════════════════════════════════
@@ -758,6 +926,12 @@ function startGame() {
     getAudioCtx();
     sounds.start();
     hideAllOverlays();
+    if (dpadContainer) {
+        dpadContainer.classList.remove('hidden');
+    }
+    
+    document.body.classList.add('game-active');
+    
     initState();
     placeFood();
     lastTickTime = performance.now();
@@ -774,6 +948,9 @@ function togglePause() {
     if (isPaused) {
         isPaused = false;
         hideAllOverlays();
+        if (dpadContainer) {
+            dpadContainer.classList.remove('hidden');
+        }
         applyPauseUI(false);
         lastTickTime = performance.now();
         moveAccumulator = 0;
@@ -781,6 +958,9 @@ function togglePause() {
         isPaused = true;
         showScreen(pauseScreen);
         applyPauseUI(true);
+        if (dpadContainer) {
+            dpadContainer.classList.add('hidden');
+        }
     }
 }
 
@@ -1028,6 +1208,7 @@ function checkCollision() {
 function triggerGameOver(reasonArg = 'self') {
     const reason = window.gameOverReason || 'self';
     isGameOver = true;
+    document.body.classList.add('game-over-active');
     const resolvedReason = (typeof reasonArg === 'string' && reasonArg) ? reasonArg : reason;
     if (typeof window !== 'undefined') {
         window.gameOverReason = resolvedReason;
@@ -1037,6 +1218,7 @@ function triggerGameOver(reasonArg = 'self') {
     finalScoreEl.textContent = score;
     finalHSEl.textContent    = getHighScore(currentDifficulty);
     newHSBadge.classList.toggle('hidden', !isNewHS);
+    saveLeaderboardScore(score, currentDifficulty);
     setTimeout(() => showScreen(gameOverScr), 450);
 }
 if (typeof window !== 'undefined') {
@@ -1137,6 +1319,11 @@ document.addEventListener('keydown', e => {
 
     if ((e.code === 'KeyP' || e.code === 'Space') && gameStarted && !isGameOver) {
         togglePause();
+        return;
+    }
+
+    if ((e.code === 'Space' || e.code === 'Enter') && isGameOver) {
+        restartBtn.click();
         return;
     }
 
@@ -1266,3 +1453,321 @@ Object.entries(dpadMap).forEach(([btnId, dir]) => {
 restartBtn.addEventListener('click', () => { sounds.click(); startGame(); });
 resumeBtn.addEventListener('click',  () => { sounds.click(); togglePause(); });
 pauseBtn.addEventListener('click',   () => { sounds.click(); togglePause(); });
+if (homeBtn) homeBtn.addEventListener('click', () => { sounds.click(); showMainMenu(); });
+
+/* ══════════════════════════════════════════════════════════
+   FIREBASE CLOUD FIRESTORE LEADERBOARD & UNIQUE PLAYER IDENTITY
+   ══════════════════════════════════════════════════════════ */
+const firebaseConfig = {
+  apiKey: "AIzaSyCetc8ROJlBGg3tb1BSazkZV_zClpGfMgc",
+  authDomain: "neon-snake-6c079.firebaseapp.com",
+  databaseURL: "https://neon-snake-6c079-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "neon-snake-6c079",
+  storageBucket: "neon-snake-6c079.firebasestorage.app",
+  messagingSenderId: "204093303034",
+  appId: "1:204093303034:web:3e268f37a2b99a42c04143",
+  measurementId: "G-TQPCQ33S3T"
+};
+
+let db = null;
+if (typeof firebase !== 'undefined') {
+    try {
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        db = firebase.firestore();
+        const rtdb = firebase.database();
+        
+        // Presence logic
+        const connectedRef = rtdb.ref(".info/connected");
+        const onlineUsersRef = rtdb.ref("status/onlineUsers");
+
+        connectedRef.on("value", (snap) => {
+            if (snap.val() === true) {
+                const userSessionRef = onlineUsersRef.push();
+                userSessionRef.onDisconnect().remove();
+                userSessionRef.set(true);
+            }
+        });
+
+        onlineUsersRef.on("value", (snap) => {
+            const count = snap.numChildren() || 1;
+            const badge = document.querySelector(".live-indicator");
+            if (badge) {
+                badge.innerHTML = `<span class="pulse-dot"></span> ${count} PLAYING`;
+            }
+        });
+
+    } catch (e) {
+        console.warn('Firebase initialization warning:', e);
+    }
+}
+
+function getPlayerId() {
+    let pid = localStorage.getItem('neon_snake_player_id');
+    if (!pid) {
+        pid = (typeof crypto !== 'undefined' && crypto.randomUUID)
+            ? crypto.randomUUID()
+            : 'runner_' + Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
+        localStorage.setItem('neon_snake_player_id', pid);
+    }
+    return pid;
+}
+
+function getPlayerName() {
+    return localStorage.getItem('snakePlayerName') || '';
+}
+
+function updatePlayerNameUI(name) {
+    const displayName = name || 'CyberRunner';
+    if (playerNameDisplay) playerNameDisplay.textContent = displayName;
+    if (headerPlayerName) headerPlayerName.textContent = displayName;
+    if (playerNameInput) playerNameInput.value = name || '';
+}
+
+function showNameModal(canCancel = true) {
+    if (playerNameModal) {
+        if (playerNameCloseBtn) {
+            playerNameCloseBtn.classList.toggle('hidden', !canCancel);
+        }
+        const currentName = getPlayerName();
+        if (playerNameInput) playerNameInput.value = currentName;
+        playerNameModal.classList.remove('hidden');
+        playerNameModal.style.setProperty('display', 'flex', 'important');
+    }
+}
+
+function hideNameModal() {
+    if (playerNameModal) {
+        playerNameModal.classList.add('hidden');
+        playerNameModal.style.setProperty('display', 'none', 'important');
+    }
+}
+
+async function handleNameSave(e) {
+    if (e) e.preventDefault();
+    const rawVal = playerNameInput ? playerNameInput.value.trim() : '';
+    if (rawVal.length < 3 || rawVal.length > 12) {
+        if (nameErrorMsg) nameErrorMsg.classList.remove('hidden');
+        if (playerNameInput) playerNameInput.classList.add('input-error');
+        sounds.die();
+        return;
+    }
+    
+    if (nameErrorMsg) nameErrorMsg.classList.add('hidden');
+    if (playerNameInput) playerNameInput.classList.remove('input-error');
+
+    localStorage.setItem('snakePlayerName', rawVal);
+    updatePlayerNameUI(rawVal);
+    sounds.click();
+    hideNameModal();
+
+    await updatePlayerNameInFirestore(rawVal);
+}
+
+async function updatePlayerNameInFirestore(newName) {
+    if (!db) return;
+    const pid = getPlayerId();
+    const diffs = ['easy', 'medium', 'hard'];
+    const batch = db.batch();
+    diffs.forEach(diff => {
+        const ref = db.collection('leaderboard').doc(`${pid}_${diff}`);
+        batch.set(ref, { name: newName }, { merge: true });
+    });
+    try {
+        await batch.commit();
+        if (leaderboardScreen && !leaderboardScreen.classList.contains('hidden')) {
+            loadLeaderboard();
+        }
+    } catch (err) {
+        console.warn('Error updating name in Firestore:', err);
+    }
+}
+
+// Bind Player Profile Badge & Name Modal Events
+if (editNameBtn) editNameBtn.addEventListener('click', () => showNameModal(true));
+if (playerProfileBadge) playerProfileBadge.addEventListener('click', (e) => {
+    e.stopPropagation();
+    showNameModal(true);
+});
+if (playerHeaderTag) playerHeaderTag.addEventListener('click', () => showNameModal(true));
+if (playerNameCloseBtn) playerNameCloseBtn.addEventListener('click', hideNameModal);
+if (playerNameForm) playerNameForm.addEventListener('submit', handleNameSave);
+
+// Check if Player Name exists on load
+window.addEventListener('DOMContentLoaded', () => {
+    const existingName = getPlayerName();
+    if (existingName) {
+        updatePlayerNameUI(existingName);
+    }
+});
+
+// Immediate init fallback
+const initPlayerName = getPlayerName();
+if (initPlayerName) {
+    updatePlayerNameUI(initPlayerName);
+}
+
+async function saveLeaderboardScore(scoreVal, diffVal) {
+    if (!db || typeof scoreVal !== 'number' || scoreVal <= 0) return;
+    try {
+        const pid = getPlayerId();
+        const playerName = getPlayerName() || 'CyberRunner';
+        const diff = diffVal || currentDifficulty || 'medium';
+        const docId = `${pid}_${diff}`;
+        const docRef = db.collection('leaderboard').doc(docId);
+
+        const docSnap = await docRef.get();
+        if (!docSnap.exists) {
+            await docRef.set({
+                playerId: pid,
+                name: playerName,
+                score: scoreVal,
+                difficulty: diff,
+                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            });
+        } else {
+            const existingData = docSnap.data();
+            const existingScore = existingData.score || 0;
+            if (scoreVal > existingScore) {
+                await docRef.set({
+                    playerId: pid,
+                    name: playerName,
+                    score: scoreVal,
+                    difficulty: diff,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
+            } else if (existingData.name !== playerName) {
+                await docRef.set({ name: playerName }, { merge: true });
+            }
+        }
+    } catch (err) {
+        console.error('Error saving score to leaderboard:', err);
+    }
+}
+
+let currentLbFilter = 'all';
+
+// Tab Click Events
+document.querySelectorAll('.lb-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+        sounds.click();
+        document.querySelectorAll('.lb-tab').forEach(t => t.classList.remove('active'));
+        e.currentTarget.classList.add('active');
+        currentLbFilter = e.currentTarget.getAttribute('data-diff') || 'all';
+        loadLeaderboard();
+    });
+});
+
+function showLeaderboard() {
+    sounds.click();
+    showScreen(leaderboardScreen);
+    loadLeaderboard();
+}
+
+function hideLeaderboard() {
+    sounds.click();
+    showScreen(mainMenuScreen);
+}
+
+function loadLeaderboard() {
+    if (!leaderboardTbody) return;
+    
+    const loadingText = i18n[currentLang]?.loading || 'LOADING...';
+    leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-loading">${loadingText}</td></tr>`;
+
+    if (!db) {
+        const errText = i18n[currentLang]?.errorLoading || 'FAILED TO LOAD';
+        leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-empty">${errText}</td></tr>`;
+        return;
+    }
+
+    db.collection('leaderboard')
+         .orderBy('score', 'desc')
+         .limit(150)
+         .get()
+         .then((querySnapshot) => {
+             if (querySnapshot.empty) {
+                 const noScoresText = i18n[currentLang]?.noScores || 'NO SCORES YET';
+                 leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-empty">${noScoresText}</td></tr>`;
+                 return;
+             }
+
+             let html = '';
+             let rank = 1;
+             const seenPlayers = new Set();
+             let count = 0;
+
+             querySnapshot.forEach((doc) => {
+                 if (count >= 50) return;
+                 const data = doc.data();
+                 const diff = (data.difficulty || 'medium').toLowerCase();
+                 const pid = data.playerId || doc.id;
+                 
+                 // Filter by difficulty in-memory
+                 if (currentLbFilter !== 'all' && diff !== currentLbFilter) {
+                     return;
+                 }
+
+                 // Deduplicate by player ID
+                 if (seenPlayers.has(pid)) {
+                     return;
+                 }
+                 seenPlayers.add(pid);
+                 count++;
+
+                 const name = data.name || 'Anonymous';
+                 const scoreNum = data.score || 0;
+                 
+                 let dateStr = 'Recently';
+                 if (data.timestamp && data.timestamp.toDate) {
+                     const d = data.timestamp.toDate();
+                     dateStr = d.toLocaleDateString(currentLang === 'ar' ? 'ar-EG' : 'en-US', {
+                         month: 'short',
+                         day: 'numeric'
+                     });
+                 }
+
+                 let rankBadge = `${rank}`;
+                 let rankClass = 'rank-normal';
+                 if (rank === 1) { rankBadge = '🥇 1'; rankClass = 'rank-1'; }
+                 else if (rank === 2) { rankBadge = '🥈 2'; rankClass = 'rank-2'; }
+                 else if (rank === 3) { rankBadge = '🥉 3'; rankClass = 'rank-3'; }
+
+                 const diffKey = `diff${diff.charAt(0).toUpperCase() + diff.slice(1)}`;
+                 const diffBadgeText = i18n[currentLang]?.[diffKey] || diff.toUpperCase();
+
+                 html += `
+                     <tr class="lb-row ${rankClass}">
+                         <td class="lb-rank"><span class="rank-pill">${rankBadge}</span></td>
+                         <td class="lb-name">${escapeHtml(name)}</td>
+                         <td class="lb-score">${scoreNum}</td>
+                         <td class="lb-diff"><span class="diff-badge-sm diff-sm-${diff}">${diffBadgeText}</span></td>
+                         <td class="lb-date">${dateStr}</td>
+                     </tr>
+                 `;
+                 rank++;
+             });
+             
+             if (html === '') {
+                 const noScoresText = i18n[currentLang]?.noScores || 'NO SCORES YET';
+                 leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-empty">${noScoresText}</td></tr>`;
+             } else {
+                 leaderboardTbody.innerHTML = html;
+             }
+         })
+         .catch((error) => {
+             console.error('Error getting leaderboard:', error);
+             const errText = i18n[currentLang]?.errorLoading || 'FAILED TO LOAD';
+             leaderboardTbody.innerHTML = `<tr><td colspan="5" class="lb-empty">${errText}</td></tr>`;
+         });
+}
+
+function escapeHtml(str) {
+    return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}

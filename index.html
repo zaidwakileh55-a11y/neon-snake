@@ -11,8 +11,9 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#080a12">
     <title>Neon Snake</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
     <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@300;400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@300;400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <!-- Ambient background floating light particles -->
@@ -23,15 +24,35 @@
         <div class="particle"></div><div class="particle"></div>
     </div>
 
+    <!-- ── Top Global Navigation Bar (Menu Only) ── -->
+    <nav class="global-nav menu-only">
+        <div class="nav-left">
+            <span class="live-indicator"><span class="pulse-dot"></span> 1 PLAYING</span>
+        </div>
+        <div class="nav-right">
+            <!-- Player Profile Badge -->
+            <div id="player-profile-badge" class="player-profile-badge nav-chip" title="Click to change name">
+                <span class="player-avatar">🐍</span>
+                <span id="player-name-display" class="player-name-display">Player</span>
+                <button id="edit-name-btn" class="edit-name-btn" title="Change Name" aria-label="Change Name">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+            </div>
+            
+            <!-- Language Selector Pill -->
+            <div class="lang-toggle-group nav-chip" aria-label="Language Selector">
+                <button id="lang-btn-en" class="lang-btn active" data-lang="en">EN</button>
+                <span class="lang-divider">|</span>
+                <button id="lang-btn-ar" class="lang-btn" data-lang="ar">AR</button>
+            </div>
+        </div>
+    </nav>
+
     <div class="game-container" id="game-container">
 
         <!-- ── Adaptive Header ── -->
         <header class="header" id="game-header">
-            <div class="title-block">
-                <h1 class="game-title">NEON SNAKE</h1>
-                <p class="game-subtitle" data-i18n="subtitle">CYBERPUNK EDITION</p>
-            </div>
-            <div class="hud-right">
+            <div class="hud-left">
                 <div class="score-board">
                     <div class="score-box" id="score-box-main">
                         <span class="label" data-i18n="score">SCORE</span>
@@ -42,6 +63,8 @@
                         <span id="high-score" class="value">0</span>
                     </div>
                 </div>
+            </div>
+            <div class="hud-right">
                 <div class="controls-block" id="controls-block">
                     <div class="controls-top-row">
                         <button id="pause-btn" class="icon-btn" title="Pause (P / Space)" aria-label="Pause game">
@@ -56,6 +79,9 @@
                                 <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
                             </svg>
                         </button>
+                        <button id="home-btn" class="icon-btn" title="Home / Exit" aria-label="Main Menu">
+                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -69,22 +95,35 @@
             <div id="particle-burst" class="particle-burst" aria-hidden="true"></div>
 
             <!-- ── 1. MAIN MENU SCREEN OVERLAY ── -->
-            <div id="main-menu-screen" class="overlay" role="dialog" aria-modal="true" aria-label="Main menu">
-                <div class="overlay-card menu-card slide-in">
-                    <h2 class="overlay-title glow-cyan">NEON SNAKE</h2>
-                    <p class="overlay-subtitle" data-i18n="subtitle">CYBERPUNK EDITION</p>
-
-                    <div class="menu-actions">
-                        <button id="menu-play-btn" class="glow-btn menu-btn" data-i18n="play">▶ PLAY</button>
-                        <button id="menu-settings-btn" class="glow-btn secondary-btn menu-btn" data-i18n="settings">⚙ SETTINGS</button>
+            <div id="main-menu-screen" class="overlay hero-overlay" role="dialog" aria-modal="true" aria-label="Main menu">
+                <div class="overlay-card menu-card slide-in hero-card">
+                    <h2 class="overlay-title glow-cyan hero-title">NEON SNAKE</h2>
+                    <div class="menu-actions hero-actions">
+                        <button id="menu-play-btn" class="glow-btn menu-btn hero-btn" data-i18n="play">▶ PLAY</button>
+                        <button id="menu-leaderboard-btn" class="glow-btn secondary-btn menu-btn hero-btn" data-i18n="leaderboardBtn">🏆 LEADERBOARD</button>
+                        <button id="menu-settings-btn" class="glow-btn secondary-btn menu-btn hero-btn" data-i18n="settings">⚙ SETTINGS</button>
                     </div>
+                </div>
+            </div>
 
-                    <!-- Language Selector Pill -->
-                    <div class="lang-toggle-group" aria-label="Language Selector">
-                        <button id="lang-btn-en" class="lang-btn active" data-lang="en">ENGLISH</button>
-                        <span class="lang-divider">|</span>
-                        <button id="lang-btn-ar" class="lang-btn" data-lang="ar">العربية</button>
-                    </div>
+            <!-- ── PLAYER NAME MODAL ── -->
+            <div id="player-name-modal" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Player Name Modal">
+                <div class="overlay-card name-modal-card slide-in">
+                    <button id="player-name-close-btn" class="modal-close-btn hidden" title="Close" aria-label="Close">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                    <div class="name-modal-icon">👑</div>
+                    <h2 class="overlay-title glow-cyan" data-i18n="enterNameTitle">ENTER YOUR NAME</h2>
+
+
+                    <form id="player-name-form" class="name-form" onsubmit="return false;">
+                        <div class="input-wrapper">
+                            <input type="text" id="player-name-input" class="cyber-input" autocomplete="off" maxlength="12" minlength="3" placeholder="Player Name..." data-i18n-placeholder="namePlaceholder" required />
+                            <span class="input-glow"></span>
+                        </div>
+                        <p id="name-error-msg" class="name-error-msg hidden" data-i18n="nameError">Name must be 3 to 12 characters.</p>
+                        <button type="submit" id="save-name-btn" class="glow-btn menu-btn" data-i18n="continueBtn">CONTINUE ▶</button>
+                    </form>
                 </div>
             </div>
 
@@ -240,14 +279,56 @@
                             <span id="final-high-score" class="fs-value fs-best">0</span>
                         </div>
                     </div>
-                    <button id="restart-btn" class="glow-btn" data-i18n="playAgain">↺ PLAY AGAIN</button>
+                    <button id="restart-btn" class="glow-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width: 18px; height: 18px; margin-right: 6px;"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.59-9.21l5.64 5.64"/></svg>
+                        <span data-i18n="playAgain">PLAY AGAIN</span>
+                    </button>
+                    <button id="gameover-leaderboard-btn" class="glow-btn secondary-btn" data-i18n="leaderboardBtn">🏆 LEADERBOARD</button>
                     <button id="gameover-menu-btn" class="glow-btn secondary-btn" data-i18n="mainMenu">🏠 MAIN MENU</button>
+                </div>
+            </div>
+
+            <!-- ── 5. LEADERBOARD SCREEN OVERLAY ── -->
+            <div id="leaderboard-screen" class="overlay hidden" role="dialog" aria-modal="true" aria-label="Leaderboard screen">
+                <div class="overlay-card leaderboard-card slide-in">
+                    <button id="leaderboard-close-btn" class="modal-close-btn" title="Close" aria-label="Close Leaderboard">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    </button>
+                    <h2 class="overlay-title glow-cyan" data-i18n="leaderboardTitle">GLOBAL LEADERBOARD</h2>
+                    <p class="overlay-subtitle" data-i18n="leaderboardSubtitle">TOP 50 CYBER RUNNERS</p>
+
+                    <!-- Difficulty Filter Tabs -->
+                    <div class="lb-filter-tabs" aria-label="Leaderboard Filter">
+                        <button class="lb-tab active" data-diff="all" data-i18n="lbTabAll">ALL</button>
+                        <button class="lb-tab" data-diff="easy" data-i18n="diffEasy">EASY</button>
+                        <button class="lb-tab" data-diff="medium" data-i18n="diffMedium">MEDIUM</button>
+                        <button class="lb-tab" data-diff="hard" data-i18n="diffHard">HARD</button>
+                    </div>
+
+                    <div class="leaderboard-table-wrapper">
+                        <table class="leaderboard-table">
+                            <thead>
+                                <tr>
+                                    <th data-i18n="rank">RANK</th>
+                                    <th data-i18n="player">PLAYER</th>
+                                    <th data-i18n="score">SCORE</th>
+                                    <th data-i18n="difficulty">DIFFICULTY</th>
+                                    <th data-i18n="date">DATE</th>
+                                </tr>
+                            </thead>
+                            <tbody id="leaderboard-tbody">
+                                <tr>
+                                    <td colspan="5" class="lb-loading" data-i18n="loading">LOADING...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </main>
 
         <!-- ── Adaptive D-Pad touch controls ── -->
-        <div class="dpad-container" id="dpad-container" aria-label="Touch directional controls">
+        <div class="dpad-container hidden" id="dpad-container" aria-label="Touch directional controls">
             <div class="dpad">
                 <button class="dpad-btn dpad-up" id="dpad-up" aria-label="Move up">
                     <svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg>
@@ -267,17 +348,19 @@
             </div>
         </div>
 
-        <!-- ── Footer keyboard instructions (Desktop / Laptop / Large screens) ── -->
-        <footer class="footer-hints desktop-only">
-            <span><span class="key-chip-sm" data-i18n="arrowsOrWasd">↑↓←→ / WASD</span> <span data-i18n="move">Move</span></span>
-            <span class="hint-sep">·</span>
-            <span><span class="key-chip-sm">P / Space</span> <span data-i18n="pause">Pause</span></span>
-            <span class="hint-sep">·</span>
-            <span><span class="key-chip-sm">M</span> <span data-i18n="toggleSound">Sound</span></span>
-        </footer>
 
     </div>
 
+    <!-- ── Bottom Global Footer Bar (Menu Only) ── -->
+    <footer class="global-footer menu-only">
+        <div class="footer-left">v1.0.4 // NEON CORE</div>
+        <div class="footer-right">DEVELOPED BY ZAID</div>
+    </footer>
+
+    <!-- Firebase App & Firestore SDKs (Compat) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
     <script src="script.js?v=2.0.0"></script>
 </body>
 </html>
