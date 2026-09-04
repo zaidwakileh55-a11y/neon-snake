@@ -3528,6 +3528,16 @@ html[lang="ar"] .admin-table th:nth-child(1), html[lang="ar"] .admin-table td:nt
 
 /* DESKTOP OVERRIDES */
 @media (min-width: 601px) {
+  #game-header {
+    margin-bottom: 12px !important;
+    padding-bottom: 4px !important;
+  }
+
+  .hud-left,
+  .hud-left .score-box {
+    margin-bottom: 2px !important;
+  }
+
   #game-header .hud-center .in-game-title,
   #game-header .hud-center .snake-title,
   #game-header .hud-title,
