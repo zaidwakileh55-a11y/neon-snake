@@ -12,8 +12,44 @@
     <meta name="theme-color" content="#080a12">
     <title>Neon Snake</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐍</text></svg>">
-    <link rel="stylesheet" href="style.css?v=1000">
+    <link rel="stylesheet" href="style.css?v=12345">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Outfit:wght@300;400;700;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    <style>
+      /* Reset previous JS and enforce direct fast wave animation on letters */
+      #titleContainer, .snake-title, .snake-title span {
+        display: flex !important;
+        animation: none !important;
+      }
+      
+      /* Apply fast wave motion per letter delay (the snake slither effect) */
+      .snake-title span {
+        animation: fastArcadeWave 0.5s ease-in-out infinite alternate !important;
+        transform-origin: center bottom !important;
+        color: #00f2fe !important;
+        text-shadow: 0 0 10px #00f2fe, 0 0 25px rgba(0, 242, 254, 0.7) !important;
+      }
+      
+      .snake-title span:nth-child(1) { animation-delay: -0.0s !important; }
+      .snake-title span:nth-child(2) { animation-delay: -0.05s !important; }
+      .snake-title span:nth-child(3) { animation-delay: -0.10s !important; }
+      .snake-title span:nth-child(4) { animation-delay: -0.15s !important; }
+      .snake-title span:nth-child(6) { animation-delay: -0.20s !important; }
+      .snake-title span:nth-child(7) { animation-delay: -0.25s !important; }
+      .snake-title span:nth-child(8) { animation-delay: -0.30s !important; }
+      .snake-title span:nth-child(9) { animation-delay: -0.35s !important; }
+      .snake-title span:nth-child(10) { animation-delay: -0.40s !important; }
+
+      @keyframes fastArcadeWave {
+        from {
+          transform: translateY(0px) scale(1);
+        }
+        to {
+          transform: translateY(-16px) scale(1.06);
+          color: #ffffff !important;
+          text-shadow: 0 0 15px #00f2fe, 0 0 35px #00f2fe, 0 0 50px rgba(0, 242, 254, 0.9) !important;
+        }
+      }
+    </style>
 </head>
 <body>
     <!-- Ambient background floating light particles -->
@@ -36,77 +72,68 @@
 
     <div class="game-container" id="game-container">
 
-        <!-- ── Adaptive Header ── -->
-        <header class="header" id="game-header">
-            <div class="hud-left">
-                <div class="score-board">
-                    <div class="score-box" id="score-box-main">
-                        <span class="label" data-i18n="score">SCORE</span>
-                        <span id="score" class="value">0</span>
-                    </div>
-                    <div class="score-box score-box-best">
-                        <span class="label" data-i18n="best">BEST</span>
-                        <span id="high-score" class="value">0</span>
-                    </div>
-                </div>
-            </div>
-            <div class="hud-center-title">
-                <span class="char" style="--i:0">N</span>
-                <span class="char" style="--i:1">E</span>
-                <span class="char" style="--i:2">O</span>
-                <span class="char" style="--i:3">N</span>
-                <span class="char space">&nbsp;</span>
-                <span class="char" style="--i:4">S</span>
-                <span class="char" style="--i:5">N</span>
-                <span class="char" style="--i:6">A</span>
-                <span class="char" style="--i:7">K</span>
-                <span class="char" style="--i:8">E</span>
-            </div>
-            <div class="hud-right">
-                <div class="controls-block" id="controls-block">
-                    <div class="controls-top-row">
-                        <button id="pause-btn" class="icon-btn" title="Pause (P / Space)" aria-label="Pause game">
-                            <svg id="pause-icon" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                            <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon"><polygon points="5,3 19,12 5,21"/></svg>
-                        </button>
-                        <button id="sound-btn" class="icon-btn" title="Toggle Sound (M)" aria-label="Toggle sound">
-                            <svg id="sound-on-icon" viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
-                            </svg>
-                            <svg id="sound-off-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon">
-                                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-                            </svg>
-                        </button>
-                        <button id="home-btn" class="icon-btn" title="Home / Exit" aria-label="Main Menu">
-                            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </header>
-
         <!-- ── Main Board Area ── -->
-        <main class="canvas-wrapper" id="canvas-wrapper">
-            <canvas id="gameCanvas" width="420" height="420" aria-label="Snake game board"></canvas>
+        <div id="gameplay-screen" style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; width: 100% !important; height: 100% !important;">
+            <!-- ── Adaptive Header ── -->
+            <header class="header game-hud" id="game-header" style="position: relative !important; width: 100% !important; max-width: 100% !important; display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 8px 16px !important; margin: 0 0 15px 0 !important; box-sizing: border-box !important;">
+                    <div class="hud-left" style="display: flex !important; gap: 10px !important;">
+                        <div class="score-board" style="display: flex; gap: 6px;">
+                            <div class="score-box" id="score-box-main" style="display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important;">
+                                <span class="label" data-i18n="score" style="font-size: 0.75rem !important; font-weight: 700 !important; letter-spacing: 1px !important;">SCORE</span>
+                                <span id="score" class="value" style="font-size: 1.4rem !important; font-weight: 900 !important; line-height: 1.1 !important;">0</span>
+                            </div>
+                            <div class="score-box score-box-best" style="display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important;">
+                                <span class="label" data-i18n="best" style="font-size: 0.75rem !important; font-weight: 700 !important; letter-spacing: 1px !important;">BEST</span>
+                                <span id="high-score" class="value" style="font-size: 1.4rem !important; font-weight: 900 !important; line-height: 1.1 !important;">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hud-center-title hud-title-wrap">
+                      <div class="snake-title in-game-title" style="display: inline-flex !important; align-items: center !important; justify-content: center !important; font-family: 'Rajdhani', sans-serif !important; font-weight: 900 !important; font-style: normal !important; color: #00f2fe !important; white-space: nowrap !important; text-transform: uppercase !important; text-shadow: 0 0 12px rgba(0, 240, 255, 0.9), 0 0 24px rgba(0, 240, 255, 0.6) !important;">
+                        <span>N</span><span>E</span><span>O</span><span>N</span>
+                        <span class="space" style="width: 8px !important;">&nbsp;</span>
+                        <span>S</span><span>N</span><span>A</span><span>K</span><span>E</span>
+                      </div>
+                    </div>
+                    <div class="hud-right" style="display: flex !important; gap: 10px !important; justify-content: flex-end !important;">
+                        <div class="controls-block" id="controls-block">
+                            <div class="controls-top-row" style="display: flex; gap: 6px;">
+                                <button id="pause-btn" class="icon-btn" title="Pause (P / Space)" aria-label="Pause game" style="font-size: 1.2rem !important; display: flex !important; justify-content: center !important; align-items: center !important; padding: 0 !important;">
+                                    <svg id="pause-icon" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                                    <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon"><polygon points="5,3 19,12 5,21"/></svg>
+                                </button>
+                                <button id="sound-btn" class="icon-btn" title="Toggle Sound (M)" aria-label="Toggle sound" style="font-size: 1.2rem !important; display: flex !important; justify-content: center !important; align-items: center !important; padding: 0 !important;">
+                                    <svg id="sound-on-icon" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                                    </svg>
+                                    <svg id="sound-off-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon">
+                                        <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                                    </svg>
+                                </button>
+                                <button id="home-btn" class="icon-btn" title="Home / Exit" aria-label="Main Menu" style="font-size: 1.2rem !important; display: flex !important; justify-content: center !important; align-items: center !important; padding: 0 !important;">
+                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+            
+            <main class="canvas-wrapper" id="canvas-wrapper" style="position: relative !important; overflow: visible !important;">
+                <canvas id="gameCanvas" width="420" height="420" aria-label="Snake game board"></canvas>
 
-            <!-- Particle burst container for food collection -->
-            <div id="particle-burst" class="particle-burst" aria-hidden="true"></div>
+                <!-- Particle burst container for food collection -->
+                <div id="particle-burst" class="particle-burst" aria-hidden="true"></div>
 
             <!-- ── 1. MAIN MENU SCREEN OVERLAY ── -->
             <div id="main-menu-screen" class="overlay hero-overlay" role="dialog" aria-modal="true" aria-label="Main menu">
                 <div class="overlay-card menu-card slide-in hero-card">
-                    <h2 class="overlay-title glow-cyan hero-title">
-                        <span class="char" style="--i:0">N</span>
-                        <span class="char" style="--i:1">E</span>
-                        <span class="char" style="--i:2">O</span>
-                        <span class="char" style="--i:3">N</span>
-                        <span class="char space">&nbsp;</span>
-                        <span class="char" style="--i:4">S</span>
-                        <span class="char" style="--i:5">N</span>
-                        <span class="char" style="--i:6">A</span>
-                        <span class="char" style="--i:7">K</span>
-                        <span class="char" style="--i:8">E</span>
-                    </h2>
+                    <div id="titleContainer" style="width: 100% !important; display: flex !important; justify-content: center !important; align-items: center !important; margin: 0 0 35px 0 !important; transform: none !important;">
+                      <h2 class="hero-title snake-title" style="display: flex !important; margin: 0 !important; font-family: 'Rajdhani', sans-serif !important; font-weight: 900 !important; font-style: normal !important; font-size: clamp(2.3rem, 5.5vw, 3.6rem) !important; letter-spacing: 2px !important; color: #00f2fe !important; text-shadow: 0 0 10px #00f2fe, 0 0 25px rgba(0, 242, 254, 0.7) !important; transform: none !important; animation: none !important;">
+                        <span>N</span><span>E</span><span>O</span><span>N</span>
+                        <span class="space" style="width: 15px !important;">&nbsp;</span>
+                        <span>S</span><span>N</span><span>A</span><span>K</span><span>E</span>
+                      </h2>
+                    </div>
                     <div class="menu-actions hero-actions">
                         <button id="menu-play-btn" class="glow-btn menu-btn hero-btn" data-i18n="play">▶ PLAY</button>
                         <button id="menu-leaderboard-btn" class="glow-btn secondary-btn menu-btn hero-btn" data-i18n="leaderboardBtn"><svg class="btn-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle; margin-right: 8px;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H7"></path><path d="M14 14.66V17c0 .55.45 1 1 1h2"></path><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"></path></svg> LEADERBOARD</button>
@@ -172,7 +199,6 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                     <h2 class="overlay-title glow-cyan" data-i18n="selectDifficulty">SELECT DIFFICULTY</h2>
-                    <p class="overlay-subtitle" data-i18n="difficultySubtitle">CHOOSE YOUR CHALLENGE</p>
 
                     <div class="difficulty-list">
                         <!-- Easy Button Card -->
@@ -329,7 +355,6 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                     <h2 class="overlay-title glow-cyan" data-i18n="leaderboardTitle">GLOBAL LEADERBOARD</h2>
-                    <p class="overlay-subtitle" data-i18n="leaderboardSubtitle">TOP 50</p>
 
                     <!-- Difficulty Filter Tabs -->
                     <div class="lb-filter-tabs" aria-label="Leaderboard Filter">
@@ -359,6 +384,7 @@
                 </div>
             </div>
         </main>
+    </div>
 
         <!-- ── Adaptive D-Pad touch controls ── -->
         <div class="dpad-container hidden" id="dpad-container" aria-label="Touch directional controls">
@@ -455,6 +481,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
-    <script src="script.js?v=1000"></script>
+    <script src="script.js?v=9999"></script>
+
 </body>
 </html>

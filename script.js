@@ -158,7 +158,6 @@ const i18n = {
         modeComingSoonDesc: 'More game modes under development.',
         modeReady: 'PLAY',
         selectDifficulty: 'SELECT DIFFICULTY',
-        difficultySubtitle: 'CHOOSE YOUR CHALLENGE',
         diffEasy: 'EASY',
         diffEasyBadge: 'RELAXED',
         diffEasyDesc: 'Gentle speed & relaxed curve. Great for casual play.',
@@ -199,7 +198,6 @@ const i18n = {
         nameError: 'Name must be 3 to 16 characters.',
         editName: 'Change Name',
         leaderboardTitle: 'GLOBAL LEADERBOARD',
-        leaderboardSubtitle: 'TOP 50',
         leaderboardBtn: '🏆 LEADERBOARD',
         lbTabAll: 'ALL',
         rank: 'RANK',
@@ -222,7 +220,6 @@ const i18n = {
         modeComingSoonDesc: 'المزيد من أنماط اللعب قيد التطوير.',
         modeReady: 'لعب',
         selectDifficulty: 'اختر مستوى الصعوبة',
-        difficultySubtitle: 'اختر مستوى التحدي',
         diffEasy: 'سهل',
         diffEasyBadge: 'هادئ',
         diffEasyDesc: 'سرعة هادئة وتدرج سلس. مناسب للعب المريح.',
@@ -263,7 +260,6 @@ const i18n = {
         nameError: 'الاسم يجب أن يكون من 3 إلى 16 حرفاً.',
         editName: 'تغيير الاسم',
         leaderboardTitle: 'لوحة المتصدرين العالمية',
-        leaderboardSubtitle: 'أفضل 50',
         leaderboardBtn: '🏆 لوحة المتصدرين',
         lbTabAll: 'الكل',
         rank: 'الترتيب',
@@ -918,11 +914,11 @@ function showPlayerNameModal(isEdit = false) {
     }, 150);
 }
 
-const PROFANITY_LIST_EN = ['fuck', 'shit', 'bitch', 'asshole', 'cunt', 'dick', 'cock', 'faggot', 'nigger', 'nigga', 'slut', 'whore', 'bastard'];
-const PROFANITY_LIST_AR = ['قحبة', 'شرموطة', 'منيوك', 'كسم', 'كس أم', 'عرص', 'خول', 'زبي', 'مومس', 'متناك', 'نيك'];
+const PROFANITY_LIST_EN = ['fuck', 'shit', 'bitch', 'ass', 'cunt', 'dick', 'cock', 'faggot', 'nigger', 'nigga', 'slut', 'whore', 'bastard', 'pussy', 'porn'];
+const PROFANITY_LIST_AR = ['كس', 'قحب', 'منيوك', 'شرموط', 'عير', 'طيز', 'عرص', 'زب', 'خول', 'كلب', 'حمار', 'لعن', 'سكس', 'نيك'];
 
 function checkProfanity(name) {
-    const norm = name.toLowerCase()
+    let norm = name.toLowerCase()
                      .replace(/5/g, 's').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a')
                      .replace(/0/g, 'o').replace(/[@]/g, 'a').replace(/[!]/g, 'i').replace(/[\*\$]/g, '')
                      .replace(/[\u064B-\u0652]/g, '') 
@@ -931,8 +927,16 @@ function checkProfanity(name) {
                      .replace(/ى/g, 'ي')
                      .replace(/ة/g, 'ه');
     
-    for (const w of PROFANITY_LIST_EN) if (norm.includes(w)) return true;
-    for (const w of PROFANITY_LIST_AR) if (norm.includes(w)) return true;
+    // Collapse repeated Arabic characters (e.g., 'كسسس' -> 'كس') using unicode flag
+    norm = norm.replace(/(.)\1+/gu, '$1');
+    
+    for (const w of PROFANITY_LIST_EN) {
+        // For short English words like 'ass', we want to be careful, but basic inclusion is requested
+        if (norm.includes(w)) return true;
+    }
+    for (const w of PROFANITY_LIST_AR) {
+        if (norm.includes(w)) return true;
+    }
     return false;
 }
 
@@ -2057,6 +2061,11 @@ window.adminEditName = async function(docId, currentName) {
     const newName = rawNewName.trim();
     if (newName.length < 3 || newName.length > 16) {
         alert('Invalid name. Must be between 3 and 16 characters.');
+        return;
+    }
+    
+    if (checkProfanity(newName)) {
+        alert(currentLang === 'ar' ? 'اسم غير لائق' : 'Inappropriate name');
         return;
     }
     

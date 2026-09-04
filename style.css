@@ -265,12 +265,67 @@ body {
     white-space: nowrap;
 }
 
-.game-title {
-    font-size: clamp(1.35rem, 2.4vw + 0.4rem, 2.5rem);
-    font-weight: 900;
-    letter-spacing: clamp(1.5px, 0.3vw, 3px);
-    color: var(--text);
-    text-shadow: 0 0 8px var(--cyan), 0 0 22px var(--cyan-glow);
+.hero-title, .game-title {
+  display: block !important;
+  text-align: center !important;
+  white-space: nowrap !important;
+  font-family: 'Rajdhani', 'Orbitron', sans-serif !important;
+  font-size: 3.2rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 5px !important;
+  text-transform: uppercase !important;
+  margin-top: 0 !important;
+  margin-bottom: 35px !important;
+  
+  /* Continuous Animated Cyber Sheen / Gradient */
+  background: linear-gradient(
+    90deg, 
+    #00f2fe 0%, 
+    #ffffff 25%, 
+    #00f2fe 50%, 
+    #4facfe 75%, 
+    #00f2fe 100%
+  ) !important;
+  background-size: 200% auto !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+
+  /* Double animation: Continuous Fluid Sweep + Smooth Floating Motion */
+  animation: 
+    cyberTextFlow 3s linear infinite,
+    cyberFloat 4s ease-in-out infinite alternate !important;
+
+  /* Crisp Neon Backglow */
+  filter: drop-shadow(0 0 10px rgba(0, 242, 254, 0.6))
+          drop-shadow(0 0 25px rgba(0, 242, 254, 0.3)) !important;
+}
+
+/* 1. Continuous light sweep across text */
+@keyframes cyberTextFlow {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+/* 2. Sleek vertical floating animation */
+@keyframes cyberFloat {
+  0% {
+    transform: translateY(0px);
+  }
+  100% {
+    transform: translateY(-8px);
+  }
+}
+
+/* Ensure inner spans don't break the gradient flow */
+.hero-title span, .hero-title .char,
+.game-title span, .game-title .char {
+  display: inline !important;
+  background: transparent !important;
+  -webkit-text-fill-color: transparent !important;
 }
 
 
@@ -588,8 +643,11 @@ body:not(.game-active) .overlay {
     -webkit-backdrop-filter: none !important;
 }
 
+body:not(.game-active) #game-header,
 body:not(.game-active) #gameCanvas {
     opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
 }
 
 .overlay-card {
@@ -634,7 +692,7 @@ body:not(.game-active) #gameCanvas {
 
 .glow-cyan {
     color: var(--cyan);
-    text-shadow: 0 0 12px var(--cyan), 0 0 30px var(--cyan-glow);
+    text-shadow: 0 0 6px var(--cyan), 0 0 14px rgba(0, 242, 254, 0.4);
 }
 
 .glow-red {
@@ -2808,12 +2866,14 @@ body.game-active .menu-only {
     animation: slitherJelly 2.2s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
     animation-delay: calc(var(--i) * 0.14s);
     transform-origin: bottom center;
-    background: linear-gradient(180deg, #6ee7b7 0%, #00ffcc 50%, #0284c7 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-family: inherit;
-    font-weight: 900;
+    color: #00f2fe !important;
+    -webkit-text-fill-color: #00f2fe !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-weight: 800 !important;
+    letter-spacing: 3px !important;
+    text-shadow: 
+        0 0 5px rgba(0, 242, 254, 0.8),
+        0 0 12px rgba(0, 242, 254, 0.4) !important;
     text-transform: uppercase;
 }
 
@@ -2827,39 +2887,22 @@ body.game-active .menu-only {
     0%,
     100% {
         transform: translateY(0px) scale(1, 1) skewX(0deg);
-        filter: drop-shadow(0 0 10px rgba(0, 255, 170, 0.7));
     }
 
     25% {
         transform: translateY(-9px) scale(0.92, 1.15) skewX(-4deg);
-        filter: drop-shadow(0 0 20px rgba(0, 255, 220, 1)) brightness(1.25);
     }
 
     50% {
         transform: translateY(4px) scale(1.14, 0.88) skewX(3deg);
-        filter: drop-shadow(0 0 12px rgba(0, 220, 150, 0.8));
     }
 
     75% {
         transform: translateY(-5px) scale(0.96, 1.08) skewX(-2deg);
-        filter: drop-shadow(0 0 24px rgba(56, 189, 248, 1)) brightness(1.3);
     }
 }
 
-.hero-title {
-    font-size: clamp(2rem, 5.2vw, 4.2rem) !important;
-    letter-spacing: 2px !important;
-    margin: 0 auto 20px auto !important;
-    font-weight: 900;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    flex-wrap: nowrap !important;
-    width: 100% !important;
-    max-width: 100vw !important;
-    overflow: visible !important;
-    text-align: center;
-}
+
 
 .hero-actions {
     display: flex;
@@ -3282,4 +3325,215 @@ html[lang="ar"] .admin-table th:nth-child(1), html[lang="ar"] .admin-table td:nt
     20%, 80% { transform: translate3d(2px, 0, 0); }
     30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
     40%, 60% { transform: translate3d(4px, 0, 0); }
+}
+
+/* --- FORCED SNAKE WAVE MOTION --- */
+.hero-title, .game-title {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  white-space: nowrap !important;
+  font-family: 'Rajdhani', 'Orbitron', sans-serif !important;
+  font-size: 3.2rem !important;
+  font-weight: 800 !important;
+  margin-bottom: 35px !important;
+  gap: 3px !important;
+}
+
+.hero-title span, .game-title span, .hero-char, .char {
+  display: inline-block !important;
+  color: #00f2fe !important;
+  -webkit-text-fill-color: #00f2fe !important;
+  animation: snakeWave 1.2s ease-in-out infinite !important;
+}
+
+.hero-title span:nth-child(1), .hero-char:nth-child(1), .char:nth-child(1) { animation-delay: 0.0s !important; }
+.hero-title span:nth-child(2), .hero-char:nth-child(2), .char:nth-child(2) { animation-delay: 0.1s !important; }
+.hero-title span:nth-child(3), .hero-char:nth-child(3), .char:nth-child(3) { animation-delay: 0.2s !important; }
+.hero-title span:nth-child(4), .hero-char:nth-child(4), .char:nth-child(4) { animation-delay: 0.3s !important; }
+.hero-title span:nth-child(5), .hero-char:nth-child(5), .char:nth-child(5) { animation-delay: 0.4s !important; }
+.hero-title span:nth-child(6), .hero-char:nth-child(6), .char:nth-child(6) { animation-delay: 0.5s !important; }
+.hero-title span:nth-child(7), .hero-char:nth-child(7), .char:nth-child(7) { animation-delay: 0.6s !important; }
+.hero-title span:nth-child(8), .hero-char:nth-child(8), .char:nth-child(8) { animation-delay: 0.7s !important; }
+.hero-title span:nth-child(9), .hero-char:nth-child(9), .char:nth-child(9) { animation-delay: 0.8s !important; }
+.hero-title span:nth-child(10), .hero-char:nth-child(10), .char:nth-child(10) { animation-delay: 0.9s !important; }
+
+@keyframes snakeWave {
+  0%, 100% {
+    transform: translateY(0px);
+    text-shadow: 0 0 8px rgba(0, 242, 254, 0.6);
+  }
+  50% {
+    transform: translateY(-16px);
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    text-shadow: 0 0 16px #00f2fe, 0 0 30px #00f2fe;
+  }
+}
+
+/* --- RESPONSIVE & SLEEK CYBER SCANNER ANIMATION --- */
+.hero-title, .game-title {
+  display: block !important;
+  text-align: center !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+  padding: 0 10px !important;
+  font-family: 'Rajdhani', 'Orbitron', sans-serif !important;
+  font-size: clamp(2rem, 5.5vw, 3.4rem) !important;
+  font-weight: 800 !important;
+  letter-spacing: clamp(1px, 0.8vw, 3px) !important;
+  text-transform: uppercase !important;
+  margin: 0 auto 32px auto !important;
+  color: #00f2fe !important;
+  -webkit-text-fill-color: #00f2fe !important;
+  overflow: visible !important; /* PREVENTS LETTER E CUTOFF */
+
+  /* Direct, 100% reliable hardware-accelerated motion */
+  animation: cyberPulseGlow 2.5s ease-in-out infinite alternate !important;
+}
+
+@keyframes cyberPulseGlow {
+  0% {
+    transform: translateY(0px) scale(1);
+    text-shadow: 
+      0 0 6px #00f2fe,
+      0 0 14px rgba(0, 242, 254, 0.6);
+  }
+  50% {
+    transform: translateY(-8px) scale(1.03);
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    text-shadow: 
+      0 0 12px #00f2fe,
+      0 0 28px rgba(0, 242, 254, 0.9),
+      0 0 45px rgba(0, 242, 254, 0.4);
+  }
+  100% {
+    transform: translateY(2px) scale(0.99);
+    text-shadow: 
+      0 0 8px #00f2fe,
+      0 0 16px rgba(0, 242, 254, 0.5);
+  }
+}
+
+/* Clean reset for any child spans */
+.hero-title span, .game-title span, .hero-char, .char {
+  animation: none !important;
+  display: inline !important;
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  background: none !important;
+}
+
+/* FORCE VIBRANT FLOATING & PULSE ANIMATION ON NEW HTML CLASS */
+.hero-title.glow-cyan, 
+.overlay-title.hero-title,
+.hero-title {
+  display: block !important;
+  text-align: center !important;
+  font-family: 'Rajdhani', 'Orbitron', sans-serif !important;
+  font-weight: 800 !important;
+  white-space: nowrap !important;
+  color: #00f2fe !important;
+  -webkit-text-fill-color: #00f2fe !important;
+  
+  /* HARDWARE ACCELERATED INFINITE MOTION */
+  animation: neonFloatPulse 2s ease-in-out infinite alternate !important;
+}
+
+@keyframes neonFloatPulse {
+  0% {
+    transform: translateY(0px) scale(1);
+    text-shadow: 
+      0 0 8px #00f2fe,
+      0 0 16px rgba(0, 242, 254, 0.5);
+  }
+  100% {
+    transform: translateY(-12px) scale(1.04);
+    color: #ffffff !important;
+    -webkit-text-fill-color: #ffffff !important;
+    text-shadow: 
+      0 0 12px #00f2fe,
+      0 0 25px #00f2fe,
+      0 0 45px rgba(0, 242, 254, 0.8);
+  }
+}
+
+/* DESKTOP HUD BASE STYLES */
+#game-header .hud-title-wrap {
+  position: absolute !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+#game-header .hud-title-wrap,
+#game-header .snake-title,
+#game-header .in-game-title,
+#game-header .snake-title span {
+  font-size: 1.85rem !important;
+  letter-spacing: 2px !important;
+}
+
+.score-box {
+  width: 68px !important;
+  height: 58px !important;
+  min-width: 68px !important;
+  border-radius: 12px !important;
+  padding: 4px 6px !important;
+  box-sizing: border-box !important;
+}
+#game-header .hud-right button {
+  width: 46px !important;
+  height: 46px !important;
+  border-radius: 12px !important;
+}
+
+/* MOBILE HUD RESPONSIVE OVERRIDES */
+@media (max-width: 550px) {
+  #game-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    position: relative !important;
+  }
+
+  /* Reset absolute positioning on EVERY possible title selector */
+  #game-header h1,
+  #game-header h2,
+  #game-header .hud-title-wrap,
+  #game-header .snake-title,
+  #game-header .in-game-title,
+  #game-header [class*="title"] {
+    position: relative !important;
+    left: auto !important;
+    transform: none !important;
+    margin: 0 2px !important;
+    flex: 1 1 auto !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    font-size: 0.72rem !important;
+  }
+
+  #game-header h1 *,
+  #game-header h2 *,
+  #game-header .hud-title-wrap *,
+  #game-header .snake-title *,
+  #game-header .in-game-title *,
+  #game-header [class*="title"] * {
+    font-size: 0.72rem !important;
+    letter-spacing: 0px !important;
+  }
+
+  /* Ensure score boxes and buttons don't push it out */
+  .score-box {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    flex-shrink: 0 !important;
+  }
+
+  #game-header .hud-right {
+    flex-shrink: 0 !important;
+  }
 }
