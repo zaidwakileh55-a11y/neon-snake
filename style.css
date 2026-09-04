@@ -3415,6 +3415,7 @@ html[lang="ar"] .admin-table th:nth-child(1), html[lang="ar"] .admin-table td:nt
     text-shadow: 
       0 0 8px #00f2fe,
       0 0 16px rgba(0, 242, 254, 0.5);
+  left: 50% !important;
   }
 }
 
@@ -3490,7 +3491,7 @@ html[lang="ar"] .admin-table th:nth-child(1), html[lang="ar"] .admin-table td:nt
 }
 
 /* MOBILE HUD RESPONSIVE OVERRIDES */
-@media (max-width: 550px) {
+@media (max-width: 800px) {
   #game-header {
     display: flex !important;
     justify-content: space-between !important;

@@ -75,48 +75,38 @@
         <!-- ── Main Board Area ── -->
         <div id="gameplay-screen" style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; width: 100% !important; height: 100% !important;">
             <!-- ── Adaptive Header ── -->
-            <header class="header game-hud" id="game-header" style="position: relative !important; width: 100% !important; max-width: 100% !important; display: flex !important; justify-content: space-between !important; align-items: center !important; padding: 8px 16px !important; margin: 0 0 15px 0 !important; box-sizing: border-box !important;">
-                    <div class="hud-left" style="display: flex !important; gap: 10px !important;">
-                        <div class="score-board" style="display: flex; gap: 6px;">
-                            <div class="score-box" id="score-box-main" style="display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important;">
-                                <span class="label" data-i18n="score" style="font-size: 0.75rem !important; font-weight: 700 !important; letter-spacing: 1px !important;">SCORE</span>
-                                <span id="score" class="value" style="font-size: 1.4rem !important; font-weight: 900 !important; line-height: 1.1 !important;">0</span>
-                            </div>
-                            <div class="score-box score-box-best" style="display: flex !important; flex-direction: column !important; justify-content: center !important; align-items: center !important;">
-                                <span class="label" data-i18n="best" style="font-size: 0.75rem !important; font-weight: 700 !important; letter-spacing: 1px !important;">BEST</span>
-                                <span id="high-score" class="value" style="font-size: 1.4rem !important; font-weight: 900 !important; line-height: 1.1 !important;">0</span>
-                            </div>
-                        </div>
+            <header class="header game-hud" id="game-header">
+                <div class="hud-left">
+                    <div class="score-box" id="score-box-main">
+                        <span class="label" data-i18n="score">SCORE</span>
+                        <span id="score" class="value">0</span>
                     </div>
-                    <div class="hud-center-title hud-title-wrap">
-                      <div class="snake-title in-game-title" style="display: inline-flex !important; align-items: center !important; justify-content: center !important; font-family: 'Rajdhani', sans-serif !important; font-weight: 900 !important; font-style: normal !important; color: #00f2fe !important; white-space: nowrap !important; text-transform: uppercase !important; text-shadow: 0 0 12px rgba(0, 240, 255, 0.9), 0 0 24px rgba(0, 240, 255, 0.6) !important;">
-                        <span>N</span><span>E</span><span>O</span><span>N</span>
-                        <span class="space" style="width: 8px !important;">&nbsp;</span>
-                        <span>S</span><span>N</span><span>A</span><span>K</span><span>E</span>
-                      </div>
+                    <div class="score-box score-box-best">
+                        <span class="label" data-i18n="best">BEST</span>
+                        <span id="high-score" class="value">0</span>
                     </div>
-                    <div class="hud-right" style="display: flex !important; gap: 10px !important; justify-content: flex-end !important;">
-                        <div class="controls-block" id="controls-block">
-                            <div class="controls-top-row" style="display: flex; gap: 6px;">
-                                <button id="pause-btn" class="icon-btn" title="Pause (P / Space)" aria-label="Pause game" style="font-size: 1.2rem !important; display: flex !important; justify-content: center !important; align-items: center !important; padding: 0 !important;">
-                                    <svg id="pause-icon" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
-                                    <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon"><polygon points="5,3 19,12 5,21"/></svg>
-                                </button>
-                                <button id="sound-btn" class="icon-btn" title="Toggle Sound (M)" aria-label="Toggle sound" style="font-size: 1.2rem !important; display: flex !important; justify-content: center !important; align-items: center !important; padding: 0 !important;">
-                                    <svg id="sound-on-icon" viewBox="0 0 24 24" fill="currentColor">
-                                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
-                                    </svg>
-                                    <svg id="sound-off-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon">
-                                        <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-                                    </svg>
-                                </button>
-                                <button id="home-btn" class="icon-btn" title="Home / Exit" aria-label="Main Menu" style="font-size: 1.2rem !important; display: flex !important; justify-content: center !important; align-items: center !important; padding: 0 !important;">
-                                    <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </header>
+                </div>
+                <div class="hud-center">
+                    <h1 class="hud-title">NEON SNAKE</h1>
+                </div>
+                <div class="hud-right">
+                    <button id="pause-btn" class="icon-btn" title="Pause (P / Space)" aria-label="Pause game">
+                        <svg id="pause-icon" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                        <svg id="play-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon"><polygon points="5,3 19,12 5,21"/></svg>
+                    </button>
+                    <button id="sound-btn" class="icon-btn" title="Toggle Sound (M)" aria-label="Toggle sound">
+                        <svg id="sound-on-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/>
+                        </svg>
+                        <svg id="sound-off-icon" viewBox="0 0 24 24" fill="currentColor" class="hidden-icon">
+                            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                        </svg>
+                    </button>
+                    <button id="home-btn" class="icon-btn" title="Home / Exit" aria-label="Main Menu">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+                    </button>
+                </div>
+            </header>
             
             <main class="canvas-wrapper" id="canvas-wrapper" style="position: relative !important; overflow: visible !important;">
                 <canvas id="gameCanvas" width="420" height="420" aria-label="Snake game board"></canvas>
